@@ -22,10 +22,11 @@ const CHIP_LABELS = ["PERF", "UI", "DX", "TEST", "AGENT", "SSR", "A11Y", "CACHE"
 
 type Plat = { x: number; y: number; w: number; h: number };
 type Chip = { x: number; y: number; label: string; got: boolean };
-type Bug = { x: number; minX: number; maxX: number; spd: number; dir: 1 | -1; dead: boolean; deadAt: number };
+type Bug = { x: number; minX: number; maxX: number; spd: number; dir: 1 | -1; kind: number; dead: boolean; deadAt: number };
 type Spark = { x: number; y: number; vx: number; vy: number; life: number; maxLife: number; color: string; size: number };
 type Runner = { x: number; y: number; vx: number; vy: number; grounded: boolean; hearts: number; invUntil: number };
 type BannerRect = { x: number; y: number; w: number; h: number; url: string };
+type Difficulty = "easy" | "normal" | "hard";
 
 type RunState = {
   p: Runner;
@@ -43,8 +44,21 @@ type RunState = {
   lastBurst: number;
   plane: { x: number; active: boolean; bannerIdx: number };
   planesSeen: number;
+  lastPlaneAt: number;
   bannerRect: BannerRect | null;
+  totalChips: number;
+  giantUntil: number;
+  diff: Difficulty;
 };
+
+const runDiffs: Record<Difficulty, { label: { ko: string; en: string }; spd: number; extra: number; hearts: number }> = {
+  easy: { label: { ko: "쉬움", en: "Easy" }, spd: .8, extra: -1, hearts: 4 },
+  normal: { label: { ko: "보통", en: "Normal" }, spd: 1, extra: 0, hearts: 3 },
+  hard: { label: { ko: "어려움", en: "Hard" }, spd: 1.3, extra: 1, hearts: 2 },
+};
+
+const GIANT_CHIPS = 12;
+const GIANT_MS = 9000;
 
 const bannerDefs = [
   { ko: "제품을 생각하고 기업을 생각하고 의사소통이 뛰어난 김도원 추천합니다", en: "Product · Business · Communication — Kim Dowon, recommended.", url: "" },
@@ -52,7 +66,7 @@ const bannerDefs = [
   { ko: "OpenDoorLabs · 더 많은 프로젝트는 Selected Work에서 ↗", en: "OpenDoorLabs — more case studies in Selected Work ↗", url: "/work" },
 ] as const;
 
-function buildLevel(level: number) {
+function buildLevel(level: number, diff: Difficulty) {
   const levelW = 2300 + (level - 1) * 420;
   const flagX = levelW - 70;
   const plats: Plat[] = [];
@@ -76,12 +90,12 @@ function buildLevel(level: number) {
   let li = 0;
   for (const [si, seg] of segs.entries()) {
     if (si > 0 && seg.w > 200) {
-      const count = seg.w > 340 && level >= 2 ? 2 : 1;
+      const count = Math.max(1, (seg.w > 340 && level >= 2 ? 2 : 1) + (seg.w > 300 ? runDiffs[diff].extra : 0));
       for (let b = 0; b < count; b += 1) {
         const minX = seg.x + 26 + b * 70;
         const maxX = Math.min(seg.x + seg.w - 26, minX + 150 + level * 20);
         if (maxX - minX < 60) continue;
-        bugs.push({ x: minX + 40, minX, maxX, spd: 1.2 + level * .28, dir: b % 2 === 0 ? 1 : -1, dead: false, deadAt: 0 });
+        bugs.push({ x: minX + 40, minX, maxX, spd: (1.2 + level * .28) * runDiffs[diff].spd, dir: b % 2 === 0 ? 1 : -1, kind: Math.min(level - 1, 2), dead: false, deadAt: 0 });
       }
     }
     if (seg.w < 170) continue;
@@ -126,8 +140,8 @@ function buildLevel(level: number) {
   return { plats, chips, bugs, levelW, flagX };
 }
 
-function freshRun(level = 1, hearts = 3): RunState {
-  const built = buildLevel(level);
+function freshRun(level = 1, hearts = 3, diff: Difficulty = "normal"): RunState {
+  const built = buildLevel(level, diff);
   return {
     p: { x: 50, y: GROUND_TOP - PH, vx: 0, vy: 0, grounded: true, hearts, invUntil: 0 },
     level,
@@ -144,7 +158,11 @@ function freshRun(level = 1, hearts = 3): RunState {
     lastBurst: 0,
     plane: { x: 0, active: false, bannerIdx: 0 },
     planesSeen: 0,
+    lastPlaneAt: 0,
     bannerRect: null,
+    totalChips: 0,
+    giantUntil: 0,
+    diff,
   };
 }
 
@@ -161,7 +179,16 @@ function overlaps(ax: number, ay: number, aw: number, ah: number, bx: number, by
   return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
 
-function drawBear(ctx: CanvasRenderingContext2D, x: number, y: number, dir: 1 | -1, t: number, moving: boolean, airborne: boolean) {
+function drawBear(ctx: CanvasRenderingContext2D, x: number, y: number, dir: 1 | -1, t: number, moving: boolean, airborne: boolean, giant = false) {
+  if (giant) {
+    ctx.save();
+    const scale = 1.75;
+    ctx.translate(x, y + PH);
+    ctx.scale(scale, scale);
+    ctx.translate(-x, -(y + PH));
+    ctx.shadowColor = "#ffd166";
+    ctx.shadowBlur = 12;
+  }
   const run = Math.sin(t / 80);
   const bob = airborne ? 0 : moving ? -Math.abs(run) * 2 : Math.sin(t / 400);
   const outline = "#0a2240";
@@ -247,6 +274,7 @@ function drawBear(ctx: CanvasRenderingContext2D, x: number, y: number, dir: 1 | 
   ctx.arc(x - 6.8, hy + 2.6, 1.9, 0, Math.PI * 2);
   ctx.arc(x + 6.8, hy + 2.6, 1.9, 0, Math.PI * 2);
   ctx.fill();
+  if (giant) { ctx.shadowBlur = 0; ctx.restore(); }
 }
 
 function drawBug(ctx: CanvasRenderingContext2D, b: Bug, now: number) {
@@ -275,15 +303,34 @@ function drawBug(ctx: CanvasRenderingContext2D, b: Bug, now: number) {
     ctx.arc(b.x + 8, y - 6, 1.6, 0, Math.PI * 2);
     ctx.fill();
   }
-  ctx.fillStyle = "#c05a52";
-  ctx.strokeStyle = "#6e2f2a";
+  const body = b.kind === 1 ? "#7a5fc0" : b.kind === 2 ? "#3a4a66" : "#c05a52";
+  const edge = b.kind === 1 ? "#4a3578" : b.kind === 2 ? "#1c2740" : "#6e2f2a";
+  ctx.fillStyle = body;
+  ctx.strokeStyle = edge;
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.roundRect(b.x - 12, y, 24, h, 7);
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = "#7c352f";
+  ctx.fillStyle = edge;
   ctx.fillRect(b.x - 12, y + h * .55, 24, 1.5);
+  if (!b.dead && b.kind === 1) {
+    ctx.fillStyle = edge;
+    for (let s = 0; s < 3; s += 1) {
+      ctx.beginPath();
+      ctx.moveTo(b.x - 9 + s * 9, y + 1);
+      ctx.lineTo(b.x - 5 + s * 9, y - 6);
+      ctx.lineTo(b.x - 1 + s * 9, y + 1);
+      ctx.fill();
+    }
+  }
+  if (!b.dead && b.kind === 2) {
+    ctx.strokeStyle = "#7ee0ff";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(b.x - 3, y - 1); ctx.lineTo(b.x + 1, y - 5); ctx.lineTo(b.x - 1, y - 5); ctx.lineTo(b.x + 4, y - 10);
+    ctx.stroke();
+  }
   if (!b.dead) {
     ctx.fillStyle = "#ffd9d4";
     ctx.beginPath();
@@ -418,9 +465,10 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
   }
   ctx.globalAlpha = 1;
   const blink = now < g.p.invUntil && Math.floor(now / 80) % 2 === 0;
+  const giant = now < g.giantUntil;
   if (!blink) {
     const dir = (g.p.vx >= 0 ? 1 : -1) as 1 | -1;
-    drawBear(ctx, g.p.x - cam, g.p.y, dir, now, Math.abs(g.p.vx) > .4 && g.p.grounded, !g.p.grounded);
+    drawBear(ctx, g.p.x - cam, g.p.y, dir, now, Math.abs(g.p.vx) > .4 && g.p.grounded, !g.p.grounded, giant);
   }
   ctx.fillStyle = "#ff6b5a";
   ctx.font = "600 10px ui-monospace, SFMono-Regular, Menlo, monospace";
@@ -428,7 +476,15 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
   ctx.fillText("♥".repeat(Math.max(g.p.hearts, 0)) || "—", 16, 24);
   ctx.fillStyle = "#5ee8a2";
   const got = g.chips.filter((c) => c.got).length;
-  ctx.fillText(`SKILLS ${got}/${g.chips.length}`, 16, 40);
+  ctx.fillText(`SKILLS ${got}/${g.chips.length} · TOTAL ${g.totalChips}`, 16, 40);
+  if (giant) {
+    const left = (g.giantUntil - now) / GIANT_MS;
+    ctx.fillStyle = "#0d2949";
+    ctx.fillRect(16, 48, 120, 6);
+    ctx.fillStyle = "#ffd166";
+    ctx.fillRect(16, 48, 120 * left, 6);
+    ctx.fillText("★ GIANT", 142, 54);
+  }
   ctx.textAlign = "right";
   ctx.fillStyle = "#8ea9c1";
   ctx.fillText(`LV ${g.level}/${MAX_LEVEL} · MAP ${Math.min(Math.round(g.p.x / g.flagX * 100), 100)}%`, W - 16, 24);
@@ -511,14 +567,16 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
   const phaseRef = useRef<"ready" | "run" | "stage" | "won" | "lost">("ready");
   const [phase, setPhase] = useState<"ready" | "run" | "stage" | "won" | "lost">("ready");
   const [level, setLevel] = useState(1);
+  const [diff, setDiff] = useState<Difficulty>("normal");
   const [showPromo, setShowPromo] = useState(false);
 
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
 
-  const startGame = () => {
-    gameRef.current = freshRun(1, 3);
+  const startGame = (d: Difficulty) => {
+    gameRef.current = freshRun(1, runDiffs[d].hearts, d);
+    setDiff(d);
     setLevel(1);
     setShowPromo(false);
     setPhase("run");
@@ -528,7 +586,7 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
     const g = gameRef.current;
     const next = g.level + 1;
     const hearts = Math.min(g.p.hearts + 1, 4);
-    const built = buildLevel(next);
+    const built = buildLevel(next, g.diff);
     g.level = next;
     g.plats = built.plats;
     g.chips = built.chips;
@@ -619,9 +677,11 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
     const step = (now: number) => {
       const g = gameRef.current;
       const p = g.p;
+      const giant = now < g.giantUntil;
       if (phase === "run") {
+        const speed = giant ? RUN_SPEED * 1.15 : RUN_SPEED;
         const move = (g.keys.has("ArrowRight") || g.keys.has("d") ? 1 : 0) - (g.keys.has("ArrowLeft") || g.keys.has("a") ? 1 : 0);
-        p.vx = move ? Math.min(Math.max(p.vx + move * .9, -RUN_SPEED), RUN_SPEED) : p.vx * .82;
+        p.vx = move ? Math.min(Math.max(p.vx + move * .9, -speed), speed) : p.vx * .82;
         if (Math.abs(p.vx) < .2) p.vx = 0;
         p.x += p.vx;
         p.x = Math.min(Math.max(p.x, 12), g.levelW - 12);
@@ -654,11 +714,11 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
           if (chip.got) continue;
           if (overlaps(p.x - PW / 2 - 4, p.y - 4, PW + 8, PH + 8, chip.x - 12, chip.y - 10, 24, 20)) {
             chip.got = true;
+            g.totalChips += 1;
             burst(chip.x, chip.y, g.sparks, 10, "#5ee8a2");
-            const got = g.chips.filter((c) => c.got).length + g.planesSeen * 4;
-            if (got % 4 === 0 && !g.plane.active) {
-              g.plane = { x: g.camX - 420, active: true, bannerIdx: g.planesSeen };
-              g.planesSeen += 1;
+            if (g.chips.every((c) => c.got)) {
+              g.giantUntil = now + GIANT_MS;
+              burst(p.x, p.y, g.sparks, 30, "#ffd166");
             }
           }
         }
@@ -667,7 +727,14 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
           bug.x += bug.dir * bug.spd;
           if (bug.x > bug.maxX) { bug.x = bug.maxX; bug.dir = -1; }
           if (bug.x < bug.minX) { bug.x = bug.minX; bug.dir = 1; }
-          if (!overlaps(p.x - PW / 2, p.y, PW, PH, bug.x - 12, GROUND_TOP - 16, 24, 16)) continue;
+          const hitW = giant ? PW * 1.6 : PW;
+          if (!overlaps(p.x - hitW / 2, p.y, hitW, PH, bug.x - 12, GROUND_TOP - 16, 24, 16)) continue;
+          if (giant) {
+            bug.dead = true;
+            bug.deadAt = now;
+            burst(bug.x, GROUND_TOP - 16, g.sparks, 14, "#ffd166");
+            continue;
+          }
           if (p.vy > 1 && p.y + PH < GROUND_TOP - 4) {
             bug.dead = true;
             bug.deadAt = now;
@@ -699,6 +766,11 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
             burst(p.x, p.y + 20, g.sparks, 10, "#8fc3ff");
           }
         }
+        if (!g.plane.active && now - g.lastPlaneAt > 14000) {
+          g.plane = { x: g.camX - 420, active: true, bannerIdx: g.planesSeen % bannerDefs.length };
+          g.planesSeen += 1;
+          g.lastPlaneAt = now;
+        }
         if (g.plane.active) {
           g.plane.x += 1.7;
           if (g.plane.x > g.camX + W + 480) g.plane.active = false;
@@ -729,6 +801,16 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
     return () => window.clearTimeout(timer);
   }, [phase, reduced]);
 
+  const diffButtons = (
+    <div className="sf-diff" role="group" aria-label={en ? "Difficulty" : "난이도"}>
+      {(["easy", "normal", "hard"] as const).map((d) => (
+        <button key={d} type="button" className={diff === d ? "active" : ""} onClick={() => setDiff(d)}>
+          {runDiffs[d].label[locale]}
+        </button>
+      ))}
+    </div>
+  );
+
   const commentary = phase === "won"
     ? (en ? "The flag's owner is… Kim Dowon, of course. You collected his skill chips on the way." : "플래그의 주인은… 역시 김도원입니다. 오는 길에 그의 스킬 칩을 주웠으니까요.")
     : phase === "lost"
@@ -755,8 +837,9 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
               <BlueBear mood="smug" className="bb-overlay-bear" />
               <span className="wc-kicker">BEAR RUN</span>
               <h2>{en ? "Run to the flag." : "플래그까지 달려라."}</h2>
-              <p>{en ? `${MAX_LEVEL} levels. Move: arrows·A/D. Jump: ↑·W·Space or tap. Stomp bugs, grab skill chips, and tap the promo plane's banner for project links.` : `${MAX_LEVEL}개 레벨. 이동: 방향키·A/D. 점프: ↑·W·스페이스 또는 탭. 버그는 밟고, 칩을 모으고, 홍보 비행기 배너를 누르면 프로젝트 링크로 이동합니다.`}</p>
-              <Button type="button" onClick={startGame}>{en ? "Run" : "달리기"} <PersonSimpleRunIcon size={17} /></Button>
+              {diffButtons}
+              <p>{en ? `${MAX_LEVEL} levels. Move: arrows·A/D. Jump: ↑·W·Space or tap. Collect every skill chip in a level to go GIANT — bugs can't hurt you then. Promo planes fly by on their own; tap a banner for links.` : `${MAX_LEVEL}개 레벨. 이동: 방향키·A/D. 점프: ↑·W·스페이스 또는 탭. 레벨의 칩을 전부 모으면 거대화 — 악당이 닿기만 해도 사라집니다. 홍보 비행기는 주기적으로 지나가고, 배너를 누르면 링크로 이동합니다.`}</p>
+              <Button type="button" onClick={() => startGame(diff)}>{en ? "Run" : "달리기"} <PersonSimpleRunIcon size={17} /></Button>
             </div>
           )}
           {phase === "stage" && (
@@ -773,6 +856,7 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
               <BlueBear mood="shocked" className="bb-overlay-bear" />
               <span className="wc-kicker">OUT OF HEARTS</span>
               <h2>{en ? "Hearts empty." : "하트 소진."}</h2>
+              {diffButtons}
               <p className="bb-promo-copy">
                 {en ? "Thinks about the product," : "제품을 생각하고"}<br />
                 {en ? "thinks about the business," : "기업을 생각하고"}<br />
@@ -782,7 +866,7 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
               </p>
               <div className="bb-promo-actions">
                 <Button type="button" onClick={continueRun}><HeartIcon size={17} /> {en ? "Recharge & continue" : "하트 재충전"}</Button>
-                <Button type="button" variant="secondary" onClick={startGame}><ArrowCounterClockwiseIcon size={17} /> {en ? "From the top" : "처음부터"}</Button>
+                <Button type="button" variant="secondary" onClick={() => startGame(diff)}><ArrowCounterClockwiseIcon size={17} /> {en ? "From the top" : "처음부터"}</Button>
                 {onExit && <Button type="button" variant="secondary" onClick={onExit}>{en ? "All games" : "다른 게임"}</Button>}
               </div>
             </div>
@@ -801,7 +885,7 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
               <div className="bb-promo-actions">
                 <Button asChild><Link href="/work">{en ? "View projects" : "프로젝트 보기"} <ArrowRightIcon size={17} /></Link></Button>
                 <Button asChild variant="secondary"><Link href="/contact">{en ? "Contact" : "연락하기"} <ArrowRightIcon size={17} /></Link></Button>
-                <Button type="button" variant="secondary" onClick={startGame}><FlagIcon size={17} /> {en ? "Run again" : "다시 달리기"}</Button>
+                <Button type="button" variant="secondary" onClick={() => startGame(diff)}><FlagIcon size={17} /> {en ? "Run again" : "다시 달리기"}</Button>
                 {onExit && <Button type="button" variant="secondary" onClick={onExit}>{en ? "All games" : "다른 게임"}</Button>}
               </div>
             </div>
