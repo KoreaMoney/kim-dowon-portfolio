@@ -105,7 +105,7 @@ function drawBear(ctx: CanvasRenderingContext2D, x: number, y: number, dir: 1 | 
   const fur = "#2f7fe0";
   const inner = "#78b7ff";
   const face = "#eaf4ff";
-  const muzzle = "#0d2949";
+  const muzzle = "#9cc4ef";
   const footY = y + PH - 3;
   const kick = airborne ? 2.5 : moving ? run * 4 : 0;
   ctx.fillStyle = "#1d5cb8";
@@ -156,22 +156,34 @@ function drawBear(ctx: CanvasRenderingContext2D, x: number, y: number, dir: 1 | 
   ctx.stroke();
   ctx.fillStyle = muzzle;
   ctx.beginPath();
-  ctx.ellipse(x + dir * 2.5, hy + 4.5, 5.4, 3.8, 0, 0, Math.PI * 2);
+  ctx.ellipse(x + dir * 2.5, hy + 4.5, 5.6, 4, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = face;
   ctx.beginPath();
-  ctx.roundRect(x + dir * 4 - 2.4, hy + 1.4, 4.8, 2.6, 1);
+  ctx.arc(x - 3.8 + dir * 1.5, hy - 2.6, 2.3, 0, Math.PI * 2);
+  ctx.arc(x + 3.8 + dir * 1.5, hy - 2.6, 2.3, 0, Math.PI * 2);
   ctx.fill();
+  ctx.fillStyle = "#071b32";
   ctx.beginPath();
-  ctx.arc(x - 3.6 + dir * 1.5, hy - 2.5, 1.9, 0, Math.PI * 2);
-  ctx.arc(x + 3.6 + dir * 1.5, hy - 2.5, 1.9, 0, Math.PI * 2);
+  ctx.arc(x - 3.8 + dir * 2.2, hy - 2.4, 1.1, 0, Math.PI * 2);
+  ctx.arc(x + 3.8 + dir * 2.2, hy - 2.4, 1.1, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = face;
-  ctx.lineWidth = 1.4;
+  ctx.fillStyle = outline;
   ctx.beginPath();
-  ctx.moveTo(x + dir * 2.5 - 2, hy + 7);
-  ctx.quadraticCurveTo(x + dir * 2.5, hy + 8.6, x + dir * 2.5 + 2, hy + 7);
+  ctx.roundRect(x + dir * 2.5 - 2, hy + 2.2, 4, 2.4, 1.2);
+  ctx.fill();
+  ctx.strokeStyle = outline;
+  ctx.lineWidth = 1.3;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(x + dir * 2.5 - 3.4, hy + 6.4);
+  ctx.quadraticCurveTo(x + dir * 2.5, hy + 8.4, x + dir * 2.5 + 3.4, hy + 6.4);
   ctx.stroke();
+  ctx.fillStyle = "rgba(255,150,160,.35)";
+  ctx.beginPath();
+  ctx.arc(x - 6.8, hy + 2.6, 1.9, 0, Math.PI * 2);
+  ctx.arc(x + 6.8, hy + 2.6, 1.9, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawBug(ctx: CanvasRenderingContext2D, b: Bug, now: number) {
