@@ -3,8 +3,8 @@
 import {
   ArrowUpRightIcon, BracketsCurlyIcon, BriefcaseIcon,
   CheckIcon, CopySimpleIcon, DownloadSimpleIcon, EnvelopeSimpleIcon, GitCommitIcon,
-  GithubLogoIcon, LinkedinLogoIcon, ListIcon, LockKeyOpenIcon, PhoneIcon,
-  PulseIcon, SquaresFourIcon, TerminalWindowIcon, TrophyIcon, UserIcon,
+  GameControllerIcon, GithubLogoIcon, LinkedinLogoIcon, ListIcon, LockKeyOpenIcon, PhoneIcon,
+  PulseIcon, SquaresFourIcon, TerminalWindowIcon, UserIcon,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useInView, useReducedMotion } from "motion/react";
 import Link from "next/link";
@@ -22,7 +22,7 @@ const navItems = [
   { href: "/work", label: "Projects", icon: SquaresFourIcon },
   { href: "/process", label: "Practice", icon: BracketsCurlyIcon },
   { href: "/career", label: "Career", icon: BriefcaseIcon },
-  { href: "/worldcup", label: "World Cup", icon: TrophyIcon },
+  { href: "/play", label: "Play", icon: GameControllerIcon },
   { href: "/contact", label: "Contact", icon: EnvelopeSimpleIcon },
 ] as const;
 
@@ -225,7 +225,7 @@ function ContactSecret() {
 
 function WorldCupTeaser() {
   const { t } = useLocale();
-  return <section className="content-section wc-teaser-section" aria-label={t("푸른곰 이상형 월드컵")}><Link className="wc-teaser" href="/worldcup"><span>INTERMISSION / MINI GAME</span><b>{t("잠깐 — 당신의 이상형을 뽑아드립니다.")}</b><small>{t("푸른곰 AI가 선택 패턴을 분석하는 이상형 월드컵. 결과는 책임지지 않습니다.")}</small><TrophyIcon size={22} /></Link></section>;
+  return <section className="content-section wc-teaser-section" aria-label={t("푸른곰 아케이드")}><Link className="wc-teaser" href="/play"><span>INTERMISSION / MINI GAMES</span><b>{t("잠깐 — 푸른곰 아케이드에서 쉬어가세요.")}</b><small>{t("이상형 월드컵과 벽돌깨기. 클리어하면 중요한 진실을 알게 됩니다.")}</small><GameControllerIcon size={22} /></Link></section>;
 }
 
 function HireActivity() {

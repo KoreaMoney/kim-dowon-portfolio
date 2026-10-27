@@ -904,3 +904,36 @@ html[lang="en"] .career-metric-value > span { min-width:0; overflow-wrap:anywher
 @media (prefers-reduced-motion:reduce) {
   .wc-analyzing-bear { animation:none; }
 }
+
+/* BlueBear Arcade hub */
+.ac-games { display:grid; grid-template-columns:1fr 1fr; gap:16px; width:min(680px,100%); margin-top:28px; }
+.ac-card { display:grid; justify-items:center; gap:10px; border:1px solid #9eb0c0; background:white; padding:26px 20px; color:var(--ink); text-align:center; cursor:pointer; box-shadow:5px 5px 0 #d7e2eb; transition:transform .2s cubic-bezier(.22,1,.36,1),box-shadow .2s,border-color .2s; }
+.ac-card:hover { transform:translateY(-4px); border-color:var(--cobalt); box-shadow:5px 9px 0 #bcd4ec; }
+.ac-card:focus-visible { outline:3px solid #8fc3ff; outline-offset:3px; }
+.ac-card strong { font-size:18px; }
+.ac-card small { color:var(--muted); font-size:12px; line-height:1.55; word-break:keep-all; }
+.ac-card code { color:#5d7186; font:10px ui-monospace,SFMono-Regular,Menlo,monospace; }
+.ac-card em { margin-top:2px; border:1px solid var(--cobalt); padding:4px 10px; color:var(--cobalt); font:700 10px ui-monospace,SFMono-Regular,Menlo,monospace; font-style:normal; letter-spacing:.1em; }
+.ac-back { display:flex; width:fit-content; min-height:44px; align-items:center; gap:7px; margin:-30px auto 14px; border:1px solid #819bb3; background:white; padding:8px 14px; color:#244159; font:650 12px inherit; cursor:pointer; }
+.ac-back:hover { border-color:var(--cobalt); color:var(--cobalt); }
+.wc-hud .ac-back { margin:0; min-height:34px; padding:5px 10px; font-size:11px; }
+
+/* Brick breaker */
+.bb-shell { display:grid; gap:18px; }
+.bb-frame { position:relative; border:1px solid #315372; background:var(--deep); box-shadow:7px 7px 0 #b8cbdc; overflow:hidden; }
+.bb-canvas { display:block; width:100%; height:auto; aspect-ratio:640/420; touch-action:none; cursor:crosshair; }
+.bb-overlay { position:absolute; inset:0; z-index:2; display:grid; align-content:center; justify-items:center; gap:8px; background:rgba(7,27,50,.88); padding:24px; color:white; text-align:center; }
+.bb-overlay-bear { width:74px; height:74px; margin-bottom:6px; }
+.bb-overlay .wc-kicker { color:#78b7ff; }
+.bb-overlay h2 { margin:6px 0 0; color:white; font-size:clamp(30px,4.5vw,42px); }
+.bb-overlay p { max-width:400px; margin:8px 0 12px; color:#afc3d6; font-size:14px; line-height:1.6; word-break:keep-all; }
+.bb-promo { background:rgba(7,27,50,.8); }
+.bb-promo-copy { color:#c8ddef!important; font-size:clamp(15px,2.6vw,19px)!important; line-height:1.7!important; }
+.bb-promo-copy b { color:#fff; font-size:1.15em; }
+.bb-promo-actions { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+.bb-promo-actions a,.bb-promo-actions button { min-height:44px; padding-inline:15px; }
+@media (max-width:680px) {
+  .ac-games { grid-template-columns:1fr; }
+  .bb-overlay { padding:14px; }
+  .bb-overlay h2 { font-size:26px; }
+}

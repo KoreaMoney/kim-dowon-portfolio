@@ -9,6 +9,7 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { BearBubble, BlueBear } from "@/components/bluebear";
 import { useLocale } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,35 +26,6 @@ const candidateIcons: Record<string, Icon> = {
 
 type Phase = "intro" | "play" | "analyzing";
 
-function BlueBear({ mood = "happy", className = "" }: { mood?: "happy" | "shocked" | "smug"; className?: string }) {
-  return (
-    <svg viewBox="0 0 80 80" aria-hidden="true" focusable="false" className={`wc-bear ${className}`}>
-      <circle className="wc-bear-ear" cx="20" cy="15" r="10" />
-      <circle className="wc-bear-ear" cx="60" cy="15" r="10" />
-      <circle className="wc-bear-inner-ear" cx="20" cy="15" r="5" />
-      <circle className="wc-bear-inner-ear" cx="60" cy="15" r="5" />
-      <path className="wc-bear-head" d="M12 20q28 -8 56 0v30q0 16 -16 16H28q-16 0 -16 -16z" />
-      <rect className="wc-bear-eye" x="25" y="34" width="6" height={mood === "shocked" ? 9 : 6} />
-      <rect className="wc-bear-eye" x="49" y="34" width="6" height={mood === "shocked" ? 9 : 6} />
-      <ellipse className="wc-bear-muzzle" cx="40" cy="50" rx="11" ry="8" />
-      <rect className="wc-bear-nose" x="37" y="44" width="6" height="4" />
-      {mood === "shocked"
-        ? <rect className="wc-bear-mouth" x="36" y="52" width="8" height="5" />
-        : <path className="wc-bear-mouth" d="m34 51 6 4 6 -4" />}
-      {mood === "smug" && <path className="wc-bear-brow" d="m23 30 10 -3m24 1 -10 -1" />}
-    </svg>
-  );
-}
-
-function BearBubble({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="wc-bubble-row">
-      <BlueBear className="wc-bubble-bear" />
-      <div className="wc-bubble"><span>푸른곰 · BLUEBEAR AI</span><p>{children}</p></div>
-    </div>
-  );
-}
-
 function shuffle<T>(list: T[]): T[] {
   const copy = [...list];
   for (let index = copy.length - 1; index > 0; index -= 1) {
@@ -63,12 +35,12 @@ function shuffle<T>(list: T[]): T[] {
   return copy;
 }
 
-export function WorldCup() {
+export function WorldCup({ onExit }: { onExit?: () => void }) {
   const { locale } = useLocale();
-  return <LocalizedWorldCup key={locale} />;
+  return <LocalizedWorldCup key={locale} onExit={onExit} />;
 }
 
-function LocalizedWorldCup() {
+function LocalizedWorldCup({ onExit }: { onExit?: () => void }) {
   const { locale } = useLocale();
   const en = locale === "en";
   const reduced = useReducedMotion();
@@ -171,8 +143,8 @@ function LocalizedWorldCup() {
 
   const copyResult = async () => {
     const text = en
-      ? `BlueBear Ideal-Type World Cup — my ideal type is Kim Dowon (match rate 100%). ${window.location.origin}/worldcup`
-      : `푸른곰 이상형 월드컵 결과 — 내 이상형은 김도원 (매칭률 100%). ${window.location.origin}/worldcup`;
+      ? `BlueBear Ideal-Type World Cup — my ideal type is Kim Dowon (match rate 100%). ${window.location.origin}/play`
+      : `푸른곰 이상형 월드컵 결과 — 내 이상형은 김도원 (매칭률 100%). ${window.location.origin}/play`;
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -186,6 +158,7 @@ function LocalizedWorldCup() {
     <main id="main" className="wc-page">
       {phase === "intro" && (
         <section className="wc-intro" aria-label={en ? "Ideal type world cup intro" : "이상형 월드컵 안내"}>
+          {onExit && <button type="button" className="ac-back" onClick={onExit}>← {en ? "All games" : "게임 선택"}</button>}
           <BlueBear className="wc-intro-bear" mood="smug" />
           <span className="wc-kicker">BLUEBEAR AI MATCHMAKING LAB</span>
           <h1>{en ? "Ideal Type" : "푸른곰"}<br />{en ? "World Cup" : "이상형 월드컵"}</h1>
@@ -278,6 +251,7 @@ function LocalizedWorldCup() {
             <Button asChild variant="secondary"><Link href="/contact">{en ? "Contact" : "연락하기"} <ArrowRightIcon size={17} /></Link></Button>
             <Button type="button" variant="secondary" onClick={copyResult}>{copied ? <CheckIcon size={17} /> : <ShareNetworkIcon size={17} />} {copied ? (en ? "Copied" : "복사됨") : (en ? "Share result" : "결과 공유")}</Button>
             <Button type="button" variant="secondary" onClick={() => setPhase("intro")}><ArrowCounterClockwiseIcon size={17} /> {en ? "Play again" : "다시 하기"}</Button>
+            {onExit && <Button type="button" variant="secondary" onClick={onExit}>{en ? "All games" : "다른 게임"}</Button>}
           </div>
         </section>
       )}
