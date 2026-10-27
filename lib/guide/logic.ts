@@ -12,7 +12,7 @@ export type GuideLocale = "ko" | "en";
 export const portfolioFacts = {
   career: [
     "저는 Frontend와 AI Agent를 직접 구축하고 개선하는 5년 경력의 개발자입니다.",
-    "저는 현재 WiseAI에서 AI Agent Pro · Frontend로 병원 상담예약 Agent와 10개 언어 번역 Agent를 개발합니다.",
+    "저는 현재 WiseAI에서 AI Agent Pro · Frontend로 병원 상담예약 Agent 챗봇, 10개 언어 번역 Agent, 사내 AX Agent Admin 플랫폼을 개발합니다.",
     "저는 OpenDoorLabs의 Founder · AI Product Engineer로 OpenStockAI, OpenDataLabs, OpenAlarm을 설계하고 운영합니다.",
     "저는 SBT Global에서 Frontend Engineer · AI Agent, Infoin에서 Frontend Engineer로 일했습니다.",
     "저는 제이셋스태츠칩팩코리아(유)에서 QA ShiftLeader 책임으로 공정 불량 추적 대시보드를 개발했습니다.",
@@ -20,6 +20,7 @@ export const portfolioFacts = {
   frontend: [
     "저는 React, Next.js, TypeScript 기반 프론트엔드와 Agent 운영 화면을 개발합니다.",
     "저는 SBT Global에서 AI LayoutEditor 로딩을 내부 측정 45초에서 8초로 줄이고 메모리 사용량을 40% 낮췄으며 100개 이상 컴포넌트를 다뤘습니다.",
+    "저는 SBT Global에서 Diagram 라이브러리와 커스텀 스프레드시트 엔진을 기획·개발·배포해 설계·검토 업무에 적용했습니다.",
     "저는 Infoin에서 3D 디지털 트윈 로딩을 35초에서 15초로 줄이고 메모리를 1.95GB에서 912MB로 낮췄습니다.",
     "저는 사용자의 다음 선택이 명확하고 상태 변화가 예측 가능한 UI를 중요하게 봅니다.",
   ],
@@ -27,6 +28,10 @@ export const portfolioFacts = {
     "저는 10개 언어 실시간 번역 Agent의 요청, 언어 분기, 문맥 유지, 결과 반환 흐름을 직접 설계하고 개발했습니다.",
     "저는 WiseAI에서 중복 모델 호출을 제거해 번역 처리 시간을 내부 측정 15초에서 7초로 줄였습니다.",
     "저는 병원 상담예약 Agent에서 병원 정보, AI 상담, 상담원 연결, 예약 생성·조회·변경·취소 흐름을 연결했습니다.",
+    "저는 WiseAI에서 병원 전용 상담예약 AI Agent 챗봇을 0→1로 개발하며 의도 분석, 지식 탐색, 예약 정보 수집, 상담사 이관의 상태 기반 워크플로우를 Python·LangGraph·LangChain으로 구축했습니다.",
+    "저는 병원별 진료 정책과 FAQ를 구조화해 멀티 테넌트 환경에서 병원별 맞춤 응답과 예약 흐름을 적용했습니다.",
+    "저는 실제 상담 로그 기반 평가 데이터셋, 모델·프롬프트 비교 평가, 자동 회귀 테스트, Langfuse 실행 추적으로 Agent 품질을 관리했습니다.",
+    "저는 비개발 직군이 병원별 Agent 설정과 운영을 제어하는 사내 AX Agent Admin 플랫폼을 0→1로 설계·구축하고 병원 성과와 영업 지표를 자동 집계하는 성과 리포트를 만들었습니다.",
     "저는 Browser + Observer Agent와 AX Agent Admin을 개발했습니다.",
   ],
   projects: [
@@ -51,7 +56,7 @@ export const portfolioFacts = {
 const keywordGroups: Array<[GuideIntent, string[]]> = [
   ["hiring", ["채용", "뽑", "지원", "강점", "약점", "단점", "부족", "우려", "리스크", "보완", "함께", "커뮤니케이션", "문제 해결"]],
   ["frontend", ["프론트", "frontend", "react", "next", "ui", "성능", "컴포넌트", "3d"]],
-  ["agent", ["agent", "에이전트", "llm", "번역", "예약", "브라우저", "와이즈덴탈", "wisedental", "wise dental"]],
+  ["agent", ["agent", "에이전트", "llm", "번역", "예약", "브라우저", "와이즈덴탈", "wisedental", "wise dental", "챗봇", "chatbot", "chat bot", "langgraph", "langchain", "langfuse", "랭그래프", "랭체인", "ax플랫폼", "ax 플랫폼", "ax admin", "ax agent", "에이엑스", "admin"]],
   ["projects", ["프로젝트", "포트폴리오", "openstock", "openalarm", "opendata", "sweet", "성과", "숫자"]],
   ["career", ["경력", "회사", "이력", "몇 년", "다닌", "다녔", "wiseai", "wise ai", "와이즈", "sbt", "에스비티", "infoin", "인포인", "제이셋", "스태츠칩팩", "스탯츠칩팩", "jset", "statschippac", "오픈도어", "opendoor"]],
   ["contact", ["연락", "이메일", "메일", "전화", "github", "linkedin"]],
@@ -158,7 +163,7 @@ function retrieveEvidenceForFacts(intent: GuideIntent, targetRole: GuideTargetRo
   if (intent === "projects") {
     if (targetRole === "frontend") return [...facts.frontend];
     if (targetRole === "agent") return [...facts.agent, ...facts.projects.slice(1, 4)];
-    return [facts.projects[0], ...facts.frontend.slice(1, 3), ...facts.agent, ...facts.projects.slice(1, 4)];
+    return [facts.projects[0], ...facts.frontend.slice(1, 4), ...facts.agent, ...facts.projects.slice(1, 4)];
   }
   if ((intent === "hiring" || intent === "general") && targetRole === "frontend") {
     return [facts.career[0], ...facts.frontend, ...facts.collaboration];
@@ -181,8 +186,8 @@ function retrieveEvidenceForFacts(intent: GuideIntent, targetRole: GuideTargetRo
 const companyEvidence: Record<GuideCompany, (facts: GuideFacts) => string[]> = {
   wiseai: (facts) => [facts.career[1], ...facts.agent],
   opendoorlabs: (facts) => [facts.career[2], ...facts.projects.slice(1, 4)],
-  sbt: (facts) => [facts.career[3], facts.frontend[1]],
-  infoin: (facts) => [facts.career[3], facts.frontend[2]],
+  sbt: (facts) => [facts.career[3], facts.frontend[1], facts.frontend[2]],
+  infoin: (facts) => [facts.career[3], facts.frontend[3]],
   jset: (facts) => [facts.career[4]],
 };
 
@@ -368,20 +373,20 @@ const hiringStepSets: Record<"frontend" | "agent" | "general", HiringStepSet> = 
 
 const companyFallbackAnswers: Record<GuideCompany, Record<GuideLocale, string>> = {
   wiseai: {
-    ko: "저는 WiseAI에서 AI Agent Pro · Frontend로 병원 상담예약 Agent와 10개 언어 실시간 번역 Agent를 개발합니다. 중복 모델 호출을 제거해 번역 처리 시간을 내부 측정 15초에서 7초로 줄였고, 병원 정보와 AI 상담, 상담원 연결, 예약 생성·조회·변경·취소를 한 대화로 연결했습니다.",
-    en: "At WiseAI, I work as AI Agent Pro · Frontend building a hospital consultation and booking Agent and a real-time translation Agent for 10 languages. I removed duplicate model calls to cut translation processing from 15 seconds to 7 seconds in internal measurements, and connected hospital information, AI consultation, staff handoff, and reservation create-view-change-cancel flows in one conversation.",
+    ko: "저는 WiseAI에서 AI Agent Pro · Frontend로 병원 전용 상담예약 AI Agent 챗봇을 0→1로 개발하고, 10개 언어 실시간 번역 Agent와 사내 AX Agent Admin 플랫폼을 구축했습니다. Python·LangGraph·LangChain 워크플로우와 로그 기반 평가·자동 회귀 테스트로 품질을 관리하고, 비개발 직군이 병원별 운영을 제어하는 Admin과 성과 리포트도 만들었습니다.",
+    en: "At WiseAI, I work as AI Agent Pro · Frontend. I built a hospital consultation and booking AI Agent chatbot from zero to one, a real-time translation Agent for 10 languages, and an in-house AX Agent Admin platform for non-developer teams. I manage Agent quality with LangGraph and LangChain workflows, log-based evaluation, automated regression tests, and performance reporting.",
   },
   opendoorlabs: {
     ko: "저는 OpenDoorLabs의 Founder · AI Product Engineer로 OpenStockAI, OpenDataLabs, OpenAlarm을 설계하고 운영합니다. OpenStockAI는 300개 대표 질의와 175개 routing 계약 테스트로, OpenDataLabs는 8개 논문을 40개 요구사항과 40개 테스트로 검증합니다.",
     en: "At OpenDoorLabs, I work as Founder · AI Product Engineer, designing and operating OpenStockAI, OpenDataLabs, and OpenAlarm. OpenStockAI is verified with 300 representative queries and 175 routing contract tests, and OpenDataLabs turns 8 papers into 40 requirements and 40 tests.",
   },
   sbt: {
-    ko: "저는 SBT Global에서 Frontend Engineer · AI Agent로 일했습니다. AI LayoutEditor 로딩을 내부 측정 45초에서 8초로 줄이고 메모리 사용량을 40% 낮췄으며 100개 이상 컴포넌트를 다뤘습니다.",
-    en: "At SBT Global, I worked as Frontend Engineer · AI Agent. I reduced AI LayoutEditor loading from 45 seconds to 8 seconds in internal measurements, lowered memory usage by 40%, and handled more than 100 components.",
+    ko: "저는 SBT Global에서 Frontend Engineer · AI Agent로 일했습니다. AI LayoutEditor 로딩을 내부 측정 45초에서 8초로 줄이고 메모리 사용량을 40% 낮췄으며, Diagram 라이브러리와 커스텀 스프레드시트 엔진도 기획·개발·배포했습니다.",
+    en: "At SBT Global, I worked as Frontend Engineer · AI Agent. I reduced AI LayoutEditor loading from 45 seconds to 8 seconds in internal measurements, lowered memory usage by 40%, and planned, built, and shipped a diagram library and a custom spreadsheet engine for design review work.",
   },
   infoin: {
-    ko: "저는 Infoin에서 Frontend Engineer로 3D 디지털 트윈, 시뮬레이션, 키오스크 제품의 프론트엔드를 개발했습니다. 3D 로딩을 35초에서 15초로 줄이고 메모리를 1.95GB에서 912MB로 낮췄습니다.",
-    en: "At Infoin, I worked as a Frontend Engineer on 3D digital twin, simulation, and kiosk products. I reduced 3D loading from 35 seconds to 15 seconds and memory usage from 1.95GB to 912MB.",
+    ko: "저는 Infoin에서 Frontend Engineer로 3D 디지털 트윈, 메타버스, 물류 손익 시뮬레이션, 포토 키오스크 제품의 프론트엔드를 개발했습니다. 3D 로딩을 35초에서 15초로 줄이고 메모리를 1.95GB에서 912MB로 낮췄습니다.",
+    en: "At Infoin, I worked as a Frontend Engineer on 3D digital twin, metaverse, logistics simulation, and photo kiosk products. I reduced 3D loading from 35 seconds to 15 seconds and memory usage from 1.95GB to 912MB.",
   },
   jset: {
     ko: "저는 제이셋스태츠칩팩코리아(유)에서 QA ShiftLeader 책임으로 공정 불량 추적·통계 대시보드와 품질 이슈 알림을 개발했습니다.",
@@ -432,7 +437,7 @@ export function fallbackGuideAnswer(
   }
   if (locale === "en") return fallbackEnglishGuideAnswer(intent, question);
   if (intent === "frontend") return "저는 React, Next.js, TypeScript로 제품 화면과 운영 도구를 만듭니다. AI LayoutEditor 로딩을 45초에서 8초로 줄이고 메모리를 40% 낮췄습니다. 3D 화면과 편집 도구 중 어느 사례를 더 보고 싶으신가요?";
-  if (intent === "agent") return "저는 병원 상담예약, 10개 언어 번역, Browser + Observer Agent와 AX Agent Admin을 개발했습니다. OpenStockAI는 300개 대표 질의와 175개 routing 계약 테스트로 검증하고, OpenDataLabs는 8개 논문을 40개 요구사항과 40개 테스트로 전환했습니다. OpenAlarm에는 3단계 알림과 AI 일기 회고를 구현했습니다.";
+  if (intent === "agent") return "저는 병원 전용 상담예약 AI Agent 챗봇을 0→1로 개발하고, 10개 언어 번역 Agent, Browser + Observer Agent, 사내 AX Agent Admin 플랫폼을 만들었습니다. OpenStockAI는 300개 대표 질의와 175개 routing 계약 테스트로 검증하고, OpenDataLabs는 8개 논문을 40개 요구사항과 40개 테스트로 전환했습니다. OpenAlarm에는 3단계 알림과 AI 일기 회고를 구현했습니다.";
   if (intent === "openstock") return "저는 OpenStockAI에서 전문 역할별 조사와 판단을 300개 대표 질의와 175개 routing 계약 테스트로 검증합니다. 구체적인 routing 구조와 테스트 기준은 이 포트폴리오에 기록하지 않았습니다.";
   if (intent === "opendata") return "저는 OpenDataLabs에서 8개 논문을 40개 제품 요구사항과 40개 테스트로 바꿨습니다. 구체적인 변환 절차와 테스트 기준은 이 포트폴리오에 기록하지 않았습니다.";
   if (intent === "openalarm" && /일기|회고/.test(question)) return "저는 OpenAlarm에 AI 일기 회고를 구현했습니다. 회고의 구체적인 동작 방식은 이 포트폴리오에 기록하지 않았습니다.";

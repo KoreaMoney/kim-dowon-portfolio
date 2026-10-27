@@ -556,10 +556,15 @@ test("named company questions route to career and answer from that employer's ev
   assert.match(wiseEvidence, /WiseAI/);
   assert.match(wiseEvidence, /번역/);
   assert.match(wiseEvidence, /상담예약/);
+  assert.match(wiseEvidence, /LangGraph|LangChain/);
+  assert.match(wiseEvidence, /AX Agent Admin/);
+  assert.match(wiseEvidence, /챗봇/);
+  assert.match(wiseEvidence, /평가 데이터셋|회귀 테스트/);
 
   const sbtEvidence = retrieveGuideEvidence("career", "ko", "unknown", "SBT에서 뭐했어?").join(" ");
   assert.match(sbtEvidence, /SBT Global/);
   assert.match(sbtEvidence, /LayoutEditor/);
+  assert.match(sbtEvidence, /스프레드시트|Diagram/);
   assert.doesNotMatch(sbtEvidence, /OpenAlarm/);
 
   assert.deepEqual(guideCards("career", "ko", "unknown", [], "와이즈에이아이에서 뭐했어?").map((card) => card.title), ["WiseAI"]);
@@ -568,8 +573,13 @@ test("named company questions route to career and answer from that employer's ev
   const wiseAnswer = fallbackGuideAnswer("career", "ko", "와이즈에이아이에서 뭐했어?");
   assert.match(wiseAnswer, /WiseAI/);
   assert.match(wiseAnswer, /번역|상담예약/);
+  assert.match(wiseAnswer, /챗봇/);
+  assert.match(wiseAnswer, /AX/);
   assert.match(wiseAnswer, /저는/);
   assert.doesNotMatch(wiseAnswer, /다루지 않아요/);
+
+  const englishWise = fallbackGuideAnswer("career", "en", "What did you do at WiseAI?");
+  assert.match(englishWise, /chatbot|AX Agent Admin/i);
 
   const englishAnswer = fallbackGuideAnswer("career", "en", "What did you do at WiseAI?");
   assert.match(englishAnswer, /WiseAI/);
@@ -580,6 +590,22 @@ test("named company questions route to career and answer from that employer's ev
     guideCards("career").map((card) => card.title),
     ["OpenDoorLabs", "WiseAI", "SBT Global", "Infoin", "제이셋스태츠칩팩코리아(유)"],
   );
+});
+
+test("chatbot and AX platform questions reach agent evidence", () => {
+  for (const question of ["챗봇 만들어봤어?", "AX 플랫폼이 뭐야?", "LangGraph 써봤어?", "사내 admin 화면도 만들었어?"]) {
+    assert.equal(detectGuideIntent(question), "agent", question);
+  }
+  assert.equal(detectGuideIntent("Did you build a chatbot?", "en"), "agent");
+  assert.equal(detectGuideIntent("Tell me about the AX platform", "en"), "agent");
+
+  const agentEvidence = retrieveGuideEvidence("agent").join(" ");
+  assert.match(agentEvidence, /AX Agent Admin/);
+  assert.match(agentEvidence, /LangGraph|LangChain/);
+  assert.match(agentEvidence, /멀티 테넌트/);
+  const englishAgentEvidence = retrieveGuideEvidence("agent", "en").join(" ");
+  assert.match(englishAgentEvidence, /chatbot/i);
+  assert.match(englishAgentEvidence, /Langfuse|regression/i);
 });
 
 test("company context survives a generic follow-up question", () => {

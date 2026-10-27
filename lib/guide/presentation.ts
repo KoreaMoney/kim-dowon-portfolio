@@ -34,8 +34,8 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
       title: { ko: "WiseAI", en: "WiseAI" },
       subtitle: { ko: "2025.10 - 현재 · AI Agent Pro · Frontend", en: "2025.10 - Present · AI Agent Pro · Frontend" },
       detail: {
-        ko: "OpenDoorLabs 역할과 병행하며 병원 상담예약 Agent와 10개 언어 번역 Agent를 개발합니다. 번역 시간은 내부 측정값입니다.",
-        en: "Alongside OpenDoorLabs, I build a hospital consultation and booking Agent and a translation Agent for 10 languages. The translation timing is an internal measurement.",
+        ko: "OpenDoorLabs 역할과 병행하며 병원 상담예약 Agent 챗봇, 10개 언어 번역 Agent, 사내 AX Admin 플랫폼을 개발합니다. 번역 시간은 내부 측정값입니다.",
+        en: "Alongside OpenDoorLabs, I build a hospital consultation and booking Agent chatbot, a translation Agent for 10 languages, and the in-house AX Admin platform. The translation timing is an internal measurement.",
       },
       metric: "15s → 7s · 10 languages",
     },
