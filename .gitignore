@@ -7,6 +7,8 @@
 
 # generated checks and local files
 /tmp
+/output
+__pycache__/
 *.log
 .DS_Store
 
