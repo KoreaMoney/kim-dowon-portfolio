@@ -603,7 +603,7 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
           }
         }
         if (g.plane.active) {
-          g.plane.x += 3;
+          g.plane.x += 1.7;
           if (g.plane.x > g.camX + W + 480) g.plane.active = false;
         }
         if (p.x >= FLAG_X) setPhase("won");
