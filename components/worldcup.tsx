@@ -26,6 +26,15 @@ const candidateIcons: Record<string, Icon> = {
 
 type Phase = "intro" | "play" | "analyzing";
 
+function renderMd(text: string): React.ReactNode[] {
+  const clean = text.replace(/[`#>~]/g, "").replace(/__(.+?)__/g, "**$1**");
+  return clean.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).filter(Boolean).map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) return <b key={index}>{part.slice(2, -2)}</b>;
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) return <em key={index}>{part.slice(1, -1)}</em>;
+    return part;
+  });
+}
+
 function shuffle<T>(list: T[]): T[] {
   const copy = [...list];
   for (let index = copy.length - 1; index > 0; index -= 1) {
@@ -236,7 +245,7 @@ function LocalizedWorldCup({ onExit }: { onExit?: () => void }) {
             <h2>{en ? "Your ideal type:" : "당신의 이상형:"}<br />{en ? "Kim Dowon" : "김도원"}</h2>
             <p className="wc-reveal-fact">{champion.reveal[locale]}</p>
           </div>
-          <BearBubble>{verdict || fallbackVerdict(picks, locale)}</BearBubble>
+          <BearBubble>{renderMd(verdict || fallbackVerdict(picks, locale))}</BearBubble>
           <div className="wc-unmask" aria-label={en ? "All candidates unmasked" : "전체 후보 정체 공개"}>
             <span>{en ? "EVERY CANDIDATE WAS…" : "모든 후보의 정체는…"}</span>
             <div>{pool.map((candidate) => <code key={candidate.id}><s>{candidate.alias[locale]}</s>{en ? "Kim Dowon" : "김도원"}</code>)}</div>

@@ -843,7 +843,7 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
             chip.got = true;
             g.totalChips += 1;
             burst(chip.x, chip.y, g.sparks, 10, "#5ee8a2");
-            if (g.chips.every((c) => c.got)) {
+            if (g.totalChips % GIANT_CHIPS === 0 || g.chips.every((c) => c.got)) {
               g.giantUntil = now + GIANT_MS;
               burst(p.x, p.y, g.sparks, 30, "#ffd166");
             }
@@ -965,7 +965,7 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
               <span className="wc-kicker">BEAR RUN</span>
               <h2>{en ? "Run to the flag." : "플래그까지 달려라."}</h2>
               {diffButtons}
-              <p>{en ? `${MAX_LEVEL} levels. Move: arrows·A/D. Jump: ↑·W·Space or tap. Collect every skill chip in a level to go GIANT — bugs can't hurt you then. Promo planes fly by on their own; tap a banner for links.` : `${MAX_LEVEL}개 레벨. 이동: 방향키·A/D. 점프: ↑·W·스페이스 또는 탭. 레벨의 칩을 전부 모으면 거대화 — 악당이 닿기만 해도 사라집니다. 홍보 비행기는 주기적으로 지나가고, 배너를 누르면 링크로 이동합니다.`}</p>
+              <p>{en ? `${MAX_LEVEL} levels. Move: arrows·A/D. Jump: ↑·W·Space or tap. Every ${GIANT_CHIPS} skill chips across levels trigger GIANT mode — bugs can't hurt you then. Promo planes fly by on their own; tap a banner for links.` : `${MAX_LEVEL}개 레벨. 이동: 방향키·A/D. 점프: ↑·W·스페이스 또는 탭. 칩은 레벨을 넘어 누적되고, ${GIANT_CHIPS}개마다 거대화 — 악당이 닿기만 해도 사라집니다. 홍보 비행기는 주기적으로 지나가고, 배너를 누르면 링크로 이동합니다.`}</p>
               <Button type="button" onClick={() => startGame(diff)}>{en ? "Run" : "달리기"} <PersonSimpleRunIcon size={17} /></Button>
             </div>
           )}
