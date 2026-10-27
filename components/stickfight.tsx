@@ -68,12 +68,12 @@ function freshFight(state: FightState | null, round: number, diff: Difficulty, p
   return { player: newFighter(140, 1), enemy, round, pw, ew, roundState: "intro", stateStart: performance.now(), keys: state?.keys ?? new Set(), sparks: [], waves: [], lastBurst: 0, diff };
 }
 
-function burst(x: number, y: number, sparks: Spark[]) {
-  for (let i = 0; i < 46; i += 1) {
+function burst(x: number, y: number, sparks: Spark[], count = 46, color?: string) {
+  for (let i = 0; i < count; i += 1) {
     const angle = Math.random() * Math.PI * 2;
     const speed = 1.4 + Math.random() * 3.4;
     const life = 55 + Math.random() * 40;
-    sparks.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 1, life, maxLife: life, color: SPARK_COLORS[i % SPARK_COLORS.length], size: 1.5 + Math.random() * 2 });
+    sparks.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 1, life, maxLife: life, color: color ?? SPARK_COLORS[i % SPARK_COLORS.length], size: 1.5 + Math.random() * 2 });
   }
 }
 
@@ -169,6 +169,10 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: FightState, now: number, en
   ctx.strokeStyle = "#294662";
   ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(0, GROUND_Y + 2); ctx.lineTo(W, GROUND_Y + 2); ctx.stroke();
+  ctx.save();
+  if (g.roundState === "clear" && now - g.stateStart < 360) {
+    ctx.translate((Math.random() - .5) * 6, (Math.random() - .5) * 6);
+  }
   ctx.fillStyle = "#8ea9c1";
   ctx.font = "600 9px ui-monospace, SFMono-Regular, Menlo, monospace";
   ctx.textAlign = "left";
@@ -219,6 +223,16 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: FightState, now: number, en
     ctx.fill();
     ctx.globalAlpha = 1;
     drawStickman(ctx, f.x, GROUND_Y - f.y, f.dir, color, jointsOf(f, now));
+    if (f.action === "wave") {
+      const p = Math.min((now - f.actionStart) / ATTACKS.wave.dur, 1);
+      const ext = Math.max(p < .45 ? p / .45 : (1 - p) / .55, 0);
+      ctx.globalAlpha = .25 + ext * .55;
+      ctx.fillStyle = f === g.player ? "#4aa3ff" : "#ff7a6b";
+      ctx.beginPath();
+      ctx.arc(f.x + f.dir * 26, GROUND_Y - f.y - 58, 4 + ext * 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
   }
   if (g.roundState === "intro") {
     const p = Math.min((now - g.stateStart) / 900, 1);
@@ -249,6 +263,11 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: FightState, now: number, en
       ctx.fillText(en ? "IDENTITY: KIM DOWON?!" : "정체: 김도원?!", 0, 0);
       ctx.restore();
     }
+  }
+  ctx.restore();
+  if (g.roundState === "clear" && now - g.stateStart < 180) {
+    ctx.fillStyle = `rgba(255,255,255,${.45 - (now - g.stateStart) / 180 * .45})`;
+    ctx.fillRect(0, 0, W, H);
   }
 }
 
@@ -394,6 +413,8 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
             const ext = progress < .45 ? progress / .45 : (1 - progress) / .55;
             if (!attacker.hitDone && ext > .5) {
               attacker.hitDone = true;
+              const waveColor = attacker === p ? "#4aa3ff" : "#ff7a6b";
+              burst(attacker.x + attacker.dir * 34, GROUND_Y - 50, g.sparks, 8, waveColor);
               g.waves.push({ x: attacker.x + attacker.dir * 34, dir: attacker.dir, owner: attacker === p ? "p" : "e", life: 80 });
             }
             if (progress >= 1) { attacker.action = "idle"; attacker.actionStart = now; }
@@ -409,6 +430,7 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
             const mul = attacker === e ? foe.dmgMul * dm.dmg : dm.pDmg;
             target.hp -= spec.dmg * mul;
             target.x = Math.min(Math.max(target.x + attacker.dir * 26, 44), W - 44);
+            burst(target.x, GROUND_Y - 46 - target.y, g.sparks, attacker.action === "uppercut" ? 20 : 10, attacker === p ? "#8fc3ff" : "#ff9d8a");
             if (attacker.action === "uppercut") target.vy = Math.max(target.vy, 6.5);
             if (target.hp <= 0) {
               target.action = "ko";
@@ -426,6 +448,7 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
           if (Math.abs(target.x - wave.x) < 22 && target.y < 74 && target.action !== "ko") {
             wave.life = 0;
             const mul = wave.owner === "e" ? foe.dmgMul * dm.dmg : dm.pDmg;
+            burst(target.x, GROUND_Y - 46 - target.y, g.sparks, 16, wave.owner === "p" ? "#4aa3ff" : "#ff7a6b");
             target.hp -= ATTACKS.wave.dmg * mul;
             target.x = Math.min(Math.max(target.x + wave.dir * 30, 44), W - 44);
             if (target.hp <= 0) { target.action = "ko"; target.actionStart = now; }
@@ -444,6 +467,8 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
           e.x = Math.min(Math.max(e.x - Math.sign(gap) * push, 44), W - 44);
         }
         if (e.action === "ko" || p.action === "ko") {
+          const loser = e.action === "ko" ? e : p;
+          burst(loser.x, GROUND_Y - 40, g.sparks, 26, loser === p ? "#8fc3ff" : "#ffb0a0");
           if (e.action === "ko") { g.pw += 1; if (p.action !== "ko") { p.action = "win"; p.actionStart = now; } }
           else { g.ew += 1; }
           setScore([g.pw, g.ew]);
@@ -465,11 +490,11 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
           g.lastBurst = now;
           burst(70 + Math.random() * (W - 140), 50 + Math.random() * 190, g.sparks);
         }
-        for (const spark of g.sparks) {
-          spark.x += spark.vx; spark.y += spark.vy; spark.vy += .045; spark.vx *= .985; spark.life -= 1;
-        }
-        g.sparks = g.sparks.filter((spark) => spark.life > 0);
       }
+      for (const spark of g.sparks) {
+        spark.x += spark.vx; spark.y += spark.vy; spark.vy += .045; spark.vx *= .985; spark.life -= 1;
+      }
+      g.sparks = g.sparks.filter((spark) => spark.life > 0);
       const revealed = phase === "won";
       drawFrame(ctx, g, now, en, revealed);
       raf = requestAnimationFrame(step);

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowCounterClockwiseIcon, ArrowRightIcon, FlagIcon, PersonSimpleRunIcon } from "@phosphor-icons/react";
+import { ArrowCounterClockwiseIcon, ArrowRightIcon, FlagIcon, HeartIcon, PersonSimpleRunIcon } from "@phosphor-icons/react";
 import { useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -260,6 +260,17 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
     setPhase("run");
   };
 
+  const continueRun = () => {
+    const g = gameRef.current;
+    g.p.hearts = 3;
+    g.p.x = g.cpX;
+    g.p.y = 60;
+    g.p.vx = 0;
+    g.p.vy = 0;
+    g.p.invUntil = performance.now() + 1500;
+    setPhase("run");
+  };
+
   const tryJump = () => {
     const g = gameRef.current;
     if (phaseRef.current !== "run") return;
@@ -424,12 +435,22 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
             </div>
           )}
           {phase === "lost" && (
-            <div className="bb-overlay">
+            <div className="bb-overlay bb-promo">
               <BlueBear mood="shocked" className="bb-overlay-bear" />
-              <span className="wc-kicker">GAME OVER</span>
-              <h2>{en ? "Out of hearts." : "하트를 다 썼습니다."}</h2>
-              <p>{en ? "The flag is still out there. Try again — stomp bugs, don't hug them." : "플래그는 아직 저기 있습니다. 다시 도전하세요 — 버그는 밟는 거지 껴안는 게 아닙니다."}</p>
-              <Button type="button" onClick={startGame}><ArrowCounterClockwiseIcon size={17} /> {en ? "Run again" : "다시 달리기"}</Button>
+              <span className="wc-kicker">OUT OF HEARTS</span>
+              <h2>{en ? "Hearts empty." : "하트 소진."}</h2>
+              <p className="bb-promo-copy">
+                {en ? "Thinks about the product," : "제품을 생각하고"}<br />
+                {en ? "thinks about the business," : "기업을 생각하고"}<br />
+                {en ? "communicates brilliantly —" : "의사소통이 뛰어난"}<br />
+                <b>{en ? "Kim Dowon. Recommended." : "김도원 추천합니다."}</b><br />
+                {en ? "(He'll refill your hearts.)" : "(하트는 김도원이 채워줍니다.)"}
+              </p>
+              <div className="bb-promo-actions">
+                <Button type="button" onClick={continueRun}><HeartIcon size={17} /> {en ? "Recharge & continue" : "하트 재충전"}</Button>
+                <Button type="button" variant="secondary" onClick={startGame}><ArrowCounterClockwiseIcon size={17} /> {en ? "From the top" : "처음부터"}</Button>
+                {onExit && <Button type="button" variant="secondary" onClick={onExit}>{en ? "All games" : "다른 게임"}</Button>}
+              </div>
             </div>
           )}
           {showPromo && (
@@ -454,10 +475,10 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
         </div>
         {phase === "run" && (
           <div className="sf-controls">
-            <div className="sf-row">
+            <div className="sf-row sf-row--run">
               <button type="button" aria-label={en ? "Move left" : "왼쪽 이동"} onPointerDown={() => gameRef.current.keys.add("ArrowLeft")} onPointerUp={() => gameRef.current.keys.delete("ArrowLeft")} onPointerLeave={() => gameRef.current.keys.delete("ArrowLeft")}>◀</button>
-              <button type="button" aria-label={en ? "Jump" : "점프"} onPointerDown={() => tryJump()}>▲</button>
               <button type="button" aria-label={en ? "Move right" : "오른쪽 이동"} onPointerDown={() => gameRef.current.keys.add("ArrowRight")} onPointerUp={() => gameRef.current.keys.delete("ArrowRight")} onPointerLeave={() => gameRef.current.keys.delete("ArrowRight")}>▶</button>
+              <button type="button" aria-label={en ? "Jump" : "점프"} onPointerDown={() => tryJump()}>{en ? "JUMP ▲" : "점프 ▲"}</button>
             </div>
           </div>
         )}
