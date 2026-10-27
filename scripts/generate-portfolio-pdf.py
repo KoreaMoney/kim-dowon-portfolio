@@ -271,7 +271,7 @@ def build() -> None:
         p("기술명보다 전후 변화와<br/>검증 방법을 먼저 봅니다.", H1),
         metric_table(
             [
-                ("15초 -> 7초", "조건부 번역과 결과 재사용으로 처리 시간 약 53% 단축"),
+                ("15초 -> 7초", "10개 언어 실시간 번역 Agent를 직접 설계·개발하고 처리 시간 약 53% 단축"),
                 ("45초 -> 8초", "복잡한 도면 편집기의 로딩 흐름을 재설계해 약 82% 단축"),
                 ("40%", "동일 프로젝트 내부 측정에서 메모리 사용량 절감"),
                 ("300개", "OpenStockAI 대표 질의 평가 세트"),
@@ -301,17 +301,30 @@ def build() -> None:
         case_block(
             "01",
             "병원 상담과 예약 Agent",
-            "AI Agent Pro · Frontend 단독 설계 및 개발",
+            "AI Agent Pro · Frontend 설계 및 개발",
             "진료 정보 탐색, AI 상담, 상담원 연결, 예약 생성과 조회, 변경, 취소를 하나의 사용자 흐름으로 묶었습니다.",
             [
                 "병원별 정책과 FAQ, 예약 설정을 상태 모델에 반영",
                 "날짜와 시술, 동적 입력 폼의 예외 상태를 화면에서 설명",
-                "한국어 원문 판별과 결과 재사용으로 중복 모델 호출 차단",
+                "상담과 예약의 예외 상태를 운영 화면과 연결",
             ],
-            "번역 처리 15초에서 7초. 공개 서비스에서 상담, 예약, 조회와 변경, 취소 흐름 확인 가능.",
+            "공개 서비스에서 상담, 예약, 조회와 변경, 취소 흐름 확인 가능.",
         ),
         case_block(
             "02",
+            "10개 언어 실시간 번역 Agent",
+            "AI Agent Pro · 설계·개발",
+            "번역 요청부터 언어 분기, 문맥 유지, 결과 반환까지 10개 언어 실시간 번역 흐름을 직접 설계하고 개발했습니다.",
+            [
+                "번역 요청을 대상 언어별 처리 경로로 분기",
+                "대화 문맥을 유지해 결과를 반환하는 Agent 흐름 구현",
+                "중복 모델 호출을 제거해 불필요한 처리 차단",
+            ],
+            "내부 측정 처리 시간 15초에서 7초, 약 53% 단축.",
+        ),
+        PageBreak(),
+        case_block(
+            "03",
             "OpenStockAI",
             "Founder · AI Product Engineer",
             "보유 종목과 시장 정보, 뉴스와 공시를 연결하고, 여러 전문 역할의 조사 과정을 사용자가 검증할 수 있게 설계했습니다.",
@@ -323,9 +336,9 @@ def build() -> None:
             "300개 대표 질의, 175개 routing 계약 테스트, 8개 실행 시나리오, 8개 회귀 스냅샷.",
         ),
         case_block(
-            "03",
+            "04",
             "AI LayoutEditor",
-            "AI Agent Developer · Frontend 단독 구현",
+            "AI Agent Developer · Frontend 구현",
             "100개가 넘는 편집 컴포넌트의 로딩과 실시간 편집 구조를 정리해 복잡한 제조 도면 화면의 대기 비용을 줄였습니다.",
             [
                 "드래그와 다중 선택, 속성 편집의 상태 경계를 분리",
@@ -340,7 +353,7 @@ def build() -> None:
         metric_table(
             [
                 ("01 병원 상담예약 Agent", "AI AGENT · 2025 · AI Agent Pro<br/>상담, 연결, 예약 생성·조회·변경·취소"),
-                ("02 10-language Translation Agent", "AI AGENT · 2025 · AI Agent Developer<br/>내부 측정 15초에서 7초"),
+                ("02 10개 언어 실시간 번역 Agent", "AI AGENT · 2025 · AI Agent Pro · 설계·개발<br/>10개 언어 흐름 직접 설계·개발, 15초에서 7초"),
                 ("03 AX Agent Admin", "FRONTEND · 2025 · Frontend · Agent<br/>Agent 설정과 운영 상태 관리"),
                 ("04 Browser + Observer Agent", "AI AGENT · 2025 · AI Agent Developer<br/>브라우저 실행과 관찰 결과 연결"),
                 ("05 Capacitor app", "FRONTEND · 2025 · Frontend Engineer<br/>모바일 실행 환경과 상태 흐름 정리"),

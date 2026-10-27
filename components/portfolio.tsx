@@ -21,7 +21,7 @@ const navItems = [
 
 const projects = [
   ["01", "AI AGENT", "2025", "AI Agent Pro", "병원 상담예약 Agent", "병원 정보, 상담원 연결, 예약 생성·조회·변경·취소를 한 대화로 연결"],
-  ["02", "AI AGENT", "2025", "AI Agent Developer", "10-language Translation Agent", "중복 모델 호출을 줄여 내부 측정 처리 시간 15초에서 7초"],
+  ["02", "AI AGENT", "2025", "AI Agent Pro · 설계·개발", "10개 언어 실시간 번역 Agent", "10개 언어 번역 흐름을 직접 설계·개발하고, 중복 모델 호출을 제거해 처리 시간을 15초→7초로 단축"],
   ["03", "FRONTEND", "2025", "Frontend · Agent", "AX Agent Admin", "Agent 설정과 운영 상태를 한 화면에서 관리하는 사내 도구"],
   ["04", "AI AGENT", "2025", "AI Agent Developer", "Browser + Observer Agent", "브라우저 실행과 관찰 결과를 연결한 업무 자동화 흐름"],
   ["05", "FRONTEND", "2025", "Frontend Engineer", "Capacitor app", "웹 제품을 모바일 실행 환경에 맞춰 패키징하고 상태 흐름 정리"],
@@ -87,14 +87,14 @@ function WiseDentalVisual() { return <div className="mini-product wise-mini"><di
 function OpenDoorVisual() { return <div className="mini-product door-mini"><header><span>INPUT</span><b>시장 진입 검토</b></header><div>{["Research","Finance","Legal","Global","Patent","Tech","Strategy"].map((item) => <span key={item}>{item}</span>)}</div><footer><span>OUTPUT</span><b>의사결정 문서</b></footer></div>; }
 
 function TranslationVisual() {
-  return <div className="translation-visual" aria-label="중복 모델 호출을 제거한 10개 언어 번역 흐름">
+  return <div className="translation-visual" aria-label="직접 설계하고 개발한 10개 언어 실시간 번역 Agent 흐름">
     <header><span>TRANSLATION FLOW</span><strong>10 LANGUAGES</strong></header>
     <div className="translation-flow">
-      <div><small>01 · INPUT</small><b>상담 문장</b><code>ko-KR</code></div>
+      <div><small>01 · REQUEST</small><b>번역 요청</b><code>source text</code></div>
       <i aria-hidden="true" />
-      <div><small>02 · ROUTE ONCE</small><b>중복 호출 제거</b><code>1 model pass</code></div>
+      <div><small>02 · LANGUAGE ROUTE</small><b>언어 분기 · 문맥 유지</b><code>1 model pass</code></div>
       <i aria-hidden="true" />
-      <div><small>03 · OUTPUT</small><b>문맥 유지</b><code>10 locales</code></div>
+      <div><small>03 · RESULT</small><b>번역 결과 반환</b><code>10 locales</code></div>
     </div>
     <footer><span>BEFORE <s>15s</s></span><strong>7s</strong><b>약 53% 단축</b></footer>
   </div>;
@@ -113,11 +113,11 @@ function CareerCodeTrack() {
   const [autoDone, setAutoDone] = useState(false);
   const userInteracted = useRef(false);
   const milestones = [
-    { commit:"qa.init@2017", year:"2016–17", label:"QA", company:"제이셋스태츠칩팩코리아(유)", role:"QA ShiftLeader 책임", copy:"공정 불량 추적과 통계 집계를 자동화하고 현장 품질 알림을 만들었습니다.", metrics:[["70%","tracking time reduction"]] },
-    { commit:"frontend.ship@2023", year:"2023–24", label:"Frontend", company:"Infoin", role:"Frontend Engineer", copy:"항공·물류·제조 데이터를 3D 디지털 트윈과 시뮬레이션 화면으로 옮겼습니다.", metrics:[["35s → 15s","loading"],["1.95GB → 912MB","memory"]] },
-    { commit:"agent.build@2024", year:"2024–25", label:"AI Agent", company:"SBT Global", role:"Frontend Engineer · AI Agent", copy:"Agent와 편집 도구, 다이어그램, 스프레드시트의 상태와 성능을 개선했습니다.", metrics:[["45s → 8s","loading"],["−40%","memory"],["100+","components"]] },
-    { commit:"product.launch@2025", year:"2025–", label:"Product", company:"WiseAI", role:"AI Agent Pro · Frontend", copy:"병원 상담예약 Agent와 운영 도구를 제품 흐름으로 연결했습니다.", metrics:[["15s → 7s","translation"],["10","languages"],["5","reservation flows"]] },
-    { commit:"main@now", year:"NOW", label:"Founder", company:"OpenDoorLabs", role:"Founder · AI Product Engineer", copy:"검증 가능한 전문 역할 협업형 AI 제품을 직접 설계하고 운영합니다.", metrics:[["300","queries"],["175","tests"],["8","papers"]] },
+    { commit:"qa.init@2017", year:"2016–17", period:"2016.08 - 2017.11", label:"QA", company:"제이셋스태츠칩팩코리아(유)", role:"QA ShiftLeader 책임", copy:"공정 불량 추적과 통계 집계를 자동화하고 현장 품질 알림을 만들었습니다.", metrics:[["70%","tracking time reduction"]] },
+    { commit:"frontend.ship@2023", year:"2023–24", period:"2023.04 - 2024.09", label:"Frontend", company:"Infoin", role:"Frontend Engineer", copy:"항공·물류·제조 데이터를 3D 디지털 트윈과 시뮬레이션 화면으로 옮겼습니다.", metrics:[["35s → 15s","loading"],["1.95GB → 912MB","memory"]] },
+    { commit:"agent.build@2024", year:"2024–25", period:"2024.09 - 2025.10", label:"AI Agent", company:"SBT Global", role:"Frontend Engineer · AI Agent", copy:"Agent와 편집 도구, 다이어그램, 스프레드시트의 상태와 성능을 개선했습니다.", metrics:[["45s → 8s","loading"],["−40%","memory"],["100+","components"]] },
+    { commit:"product.launch@2025", year:"2025–", period:"2025.10 - 현재", label:"Product", company:"WiseAI", role:"AI Agent Pro · Frontend", copy:"병원 상담예약 Agent와 10개 언어 실시간 번역 Agent, 운영 도구를 제품 흐름으로 연결했습니다.", metrics:[["15s → 7s","translation"],["10","languages"],["5","reservation flows"]] },
+    { commit:"main@now", year:"NOW", period:"2026 - 현재", label:"Founder", company:"OpenDoorLabs", role:"Founder · AI Product Engineer", copy:"검증 가능한 전문 역할 협업형 AI 제품을 직접 설계하고 운영합니다.", metrics:[["300","queries"],["175","tests"],["8","papers"]] },
   ];
   useEffect(() => {
     if (reduced || !inView || autoDone || userInteracted.current || window.matchMedia("(max-width: 680px)").matches) return;
@@ -134,7 +134,7 @@ function CareerCodeTrack() {
     setActive(index);
   };
   const item = milestones[active];
-  return <div ref={trackRef} className="career-code-track" aria-label="2016년 QA에서 현재 AI 제품 개발까지 이어지는 경력 commit log"><header className="career-code-head"><code>$ git log --career --oneline</code><span>5 YEARS / CONTINUOUS DELIVERY</span></header><div className="commit-graph" style={{ "--commit-index": active } as React.CSSProperties}><span className="commit-base" aria-hidden="true" /><span className="commit-progress" aria-hidden="true" /><span className="commit-caret" aria-hidden="true">&gt;_</span>{milestones.map((mark, index) => <button type="button" className={`commit-node ${active === index ? "is-active" : ""}`} onClick={() => selectMilestone(index)} key={mark.commit} aria-label={`${mark.commit} ${mark.company} 선택`} aria-pressed={active === index}><i /><code>{mark.commit}</code><span>{mark.year} · {mark.label}</span></button>)}</div><div className="career-detail"><AnimatePresence mode="wait"><motion.div className="career-detail-content" key={item.company} initial={{ x:reduced?0:12 }} animate={{ x:0 }} exit={{ x:reduced?0:-12 }} transition={{ duration:.28,ease:[.22,1,.36,1] }}><div className="career-summary"><span>CHECKOUT / {item.commit}</span><h3>{item.company}</h3><b>{item.role}</b><p>{item.copy}</p></div><div className="career-metrics">{item.metrics.map(([value,label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div></motion.div></AnimatePresence></div><div className="mobile-commit-log">{milestones.map((mark, index) => <article className={active === index ? "is-active" : ""} key={mark.commit}><button type="button" onClick={() => selectMilestone(index)} aria-pressed={active === index}><code>{active === index ? ">_ " : ""}{mark.commit}</code><strong>{mark.company}</strong><span>{mark.year} · {mark.role}</span></button><p>{mark.copy}</p><div>{mark.metrics.map(([value,label]) => <span key={label}><strong>{value}</strong><small>{label}</small></span>)}</div></article>)}</div></div>;
+  return <div ref={trackRef} className="career-code-track" aria-label="2016년 QA에서 현재 AI 제품 개발까지 이어지는 경력 commit log"><header className="career-code-head"><code>$ git log --career --oneline</code><span>5 YEARS / CONTINUOUS DELIVERY</span></header><div className="commit-graph" style={{ "--commit-index": active } as React.CSSProperties}><span className="commit-base" aria-hidden="true" /><span className="commit-progress" aria-hidden="true" /><span className="commit-caret" aria-hidden="true">&gt;_</span>{milestones.map((mark, index) => <button type="button" className={`commit-node ${active === index ? "is-active" : ""}`} onClick={() => selectMilestone(index)} key={mark.commit} aria-label={`${mark.commit} ${mark.company} 선택`} aria-pressed={active === index}><i /><code>{mark.commit}</code><span>{mark.year} · {mark.label}</span></button>)}</div><div className="career-detail"><AnimatePresence mode="wait"><motion.div className="career-detail-content" key={item.company} initial={{ x:reduced?0:12 }} animate={{ x:0 }} exit={{ x:reduced?0:-12 }} transition={{ duration:.28,ease:[.22,1,.36,1] }}><div className="career-summary"><span>CHECKOUT / {item.commit}</span><h3>{item.company}</h3><b>{item.role}</b><p>{item.copy}</p></div><div className="career-metrics">{item.metrics.map(([value,label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div></motion.div></AnimatePresence></div><div className="career-records" aria-label="전체 경력 목록">{milestones.map((mark, index) => <article className={active === index ? "is-active" : ""} key={mark.commit}><button type="button" onClick={() => selectMilestone(index)} aria-pressed={active === index}><code>{active === index ? ">_ " : ""}{mark.commit}</code><strong>{mark.company}</strong><span>{mark.period} · {mark.role}</span></button><p>{mark.copy}</p><div>{mark.metrics.map(([value,label]) => <span key={label}><strong>{value}</strong><small>{label}</small></span>)}</div></article>)}</div></div>;
 }
 
 export function Portfolio() {
@@ -145,7 +145,7 @@ export function Portfolio() {
     <SignalConsole />
     <section id="work" className="content-section work-section"><div className="section-head"><p>SELECTED WORK</p><h2>업무의 복잡함을<br />작동하는 제품으로</h2><span>AI Agent와 프론트엔드를 분리하지 않고 사용자가 일을 끝내는 흐름으로 설계합니다.</span></div><MetricRail /><div className="featured-work">
       <article className="feature-case"><div className="feature-copy"><small>01 / WISE DENTAL</small><h3>상담에서 예약까지<br />문맥을 이어갑니다.</h3><p>병원 정보, AI 상담, 상담원 연결과 예약 생성·조회·변경·취소를 한 대화 안에서 처리합니다.</p><a href="https://wisedental.aiu-aipage.co.kr/" target="_blank" rel="noreferrer">서비스 보기 <ArrowUpRightIcon size={16} /></a></div><WiseDentalVisual /></article>
-      <article className="feature-case translation-case"><div className="feature-copy"><small>02 / TRANSLATION AGENT</small><h3>한 번의 모델 호출로<br />10개 언어를 잇습니다.</h3><p>제가 개발한 다국어 번역 Agent입니다. 중복 모델 호출을 걷어내고 문맥을 유지하는 흐름으로 정리해 내부 측정 처리 시간을 15초에서 7초로 줄였습니다.</p><div className="fact-line"><span>10 languages</span><span>15s → 7s</span><span>약 53% 단축</span></div></div><TranslationVisual /></article>
+      <article className="feature-case translation-case"><div className="feature-copy"><small>02 / TRANSLATION AGENT</small><h3>10개 언어 실시간 번역 Agent를<br />직접 설계하고 개발했습니다.</h3><p>번역 요청부터 언어 분기, 문맥 유지, 결과 반환까지 전체 흐름을 설계·개발했습니다. 중복 모델 호출을 제거해 내부 측정 처리 시간을 15초에서 7초로 줄였습니다.</p><div className="fact-line"><span>10 languages</span><span>15s → 7s</span><span>약 53% 단축</span></div></div><TranslationVisual /></article>
       <article className="feature-case"><div className="feature-copy"><small>03 / OPEN DOOR LABS</small><h3>전문 역할의 판단을<br />검증할 수 있게</h3><p>OpenStockAI, OpenDataLabs, OpenAlarm을 통해 입력, 전문 역할별 작업, 근거 있는 결과를 하나의 제품 흐름으로 만듭니다.</p><div className="fact-line"><span>300 대표 질의</span><span>175 계약 테스트</span><span>8 논문</span></div><a href="https://opendoor.supply/ko" target="_blank" rel="noreferrer">플랫폼 보기 <ArrowUpRightIcon size={16} /></a></div><OpenDoorVisual /></article>
       <article className="feature-case compact-case"><div className="feature-copy"><small>04 / AX · BROWSER AGENT</small><h3>Agent를 운영하는 화면</h3><p>관리자가 설정과 상태를 읽는 AX Admin, 브라우저 실행과 결과 관찰을 잇는 Browser + Observer Agent를 개발했습니다.</p></div><div className="ascii-pane"><code>browser.run()</code><code>observer.capture()</code><code>agent.decide()</code><code>admin.review()</code></div></article>
       <article className="feature-case compact-case"><div className="feature-copy"><small>05 / LAYOUT · DIGITAL TWIN</small><h3>무거운 편집과 3D 정보를 빠르게</h3><p>LayoutEditor는 내부 측정 45초에서 8초, 메모리 40% 감소를 기록했습니다. 항공·물류·제조 데이터를 3D 화면과 시뮬레이션으로 구현했습니다.</p></div><div className="layout-pane"><span>100+ components</span><b>45s → 8s</b><small>internal project measurement</small></div></article>
