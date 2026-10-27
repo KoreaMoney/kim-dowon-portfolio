@@ -55,43 +55,72 @@ const bannerDefs = [
 function buildLevel(level: number) {
   const levelW = 2300 + (level - 1) * 420;
   const flagX = levelW - 70;
+  const plats: Plat[] = [];
+  const chips: Chip[] = [];
+  const bugs: Bug[] = [];
+  const gapW = (i: number) => 60 + ((i * 31 + level * 23) % 52) + level * 6;
+  const segW = (i: number) => 320 + ((i * 47 + level * 19) % 130);
   const segs: Plat[] = [];
-  let gx = 0;
-  while (gx < levelW) {
-    const len = Math.min(320 + Math.random() * 150, levelW - gx);
-    segs.push({ x: gx, y: GROUND_TOP, w: len, h: 80 });
-    gx += len;
-    if (gx < levelW - 260) gx += 55 + level * 12 + Math.random() * 38;
-    else break;
+  let x = 0;
+  let i = 0;
+  while (x < levelW - 200) {
+    const len = Math.min(segW(i), levelW - x);
+    segs.push({ x, y: GROUND_TOP, w: len, h: 80 });
+    x += len;
+    if (x < levelW - 260) x += gapW(i);
+    i += 1;
   }
   const last = segs[segs.length - 1];
-  if (last.x + last.w < levelW) segs.push({ x: last.x + last.w, y: GROUND_TOP, w: levelW - last.x - last.w, h: 80 });
-  const plats: Plat[] = [...segs];
-  const chips: Chip[] = [];
+  last.w = levelW - last.x;
+  plats.push(...segs);
   let li = 0;
-  for (const seg of segs) {
-    if (seg.w < 150) continue;
-    const floaters = seg.w > 300 ? 2 : 1;
-    for (let f = 0; f < floaters && li < CHIP_LABELS.length; f += 1) {
-      const fw = 80 + Math.random() * 20;
-      const fx = seg.x + 30 + Math.random() * Math.max(seg.w - fw - 90, 24);
-      const fy = 220 + Math.random() * 64;
-      plats.push({ x: fx, y: fy, w: fw, h: 14 });
-      if (Math.random() < .85) {
-        chips.push({ x: fx + fw / 2, y: fy - 30, label: CHIP_LABELS[li], got: false });
+  for (const [si, seg] of segs.entries()) {
+    if (si > 0 && seg.w > 200) {
+      const count = seg.w > 340 && level >= 2 ? 2 : 1;
+      for (let b = 0; b < count; b += 1) {
+        const minX = seg.x + 26 + b * 70;
+        const maxX = Math.min(seg.x + seg.w - 26, minX + 150 + level * 20);
+        if (maxX - minX < 60) continue;
+        bugs.push({ x: minX + 40, minX, maxX, spd: 1.2 + level * .28, dir: b % 2 === 0 ? 1 : -1, dead: false, deadAt: 0 });
+      }
+    }
+    if (seg.w < 170) continue;
+    const fy = si % 2 === 0 ? 288 : 252;
+    const fw = 92;
+    const fx = seg.x + (seg.w - fw) / 2;
+    plats.push({ x: fx, y: fy, w: fw, h: 14 });
+    if (li < CHIP_LABELS.length) {
+      chips.push({ x: fx + fw / 2, y: fy - 28, label: CHIP_LABELS[li], got: false });
+      li += 1;
+    }
+    if (seg.w > 380 && si % 3 === 1) {
+      const fy2 = 232;
+      const fx2 = seg.x + 60;
+      plats.push({ x: fx2, y: fy2, w: 84, h: 14 });
+      if (li < CHIP_LABELS.length) {
+        chips.push({ x: fx2 + 42, y: fy2 - 28, label: CHIP_LABELS[li], got: false });
+        li += 1;
+      }
+    }
+    if (seg.w > 300 && (si + level) % 3 === 0) {
+      const sx = seg.x + seg.w - 140;
+      for (let s = 0; s < 3; s += 1) {
+        plats.push({ x: sx + s * 26, y: GROUND_TOP - 24 * (s + 1), w: 26, h: 24 * (s + 1) });
+      }
+      if (li < CHIP_LABELS.length) {
+        chips.push({ x: sx + 3 * 26 + 13, y: GROUND_TOP - 96, label: CHIP_LABELS[li], got: false });
         li += 1;
       }
     }
   }
-  const bugs: Bug[] = [];
-  for (const [i, seg] of segs.entries()) {
-    if (i === 0 || seg.w < 160) continue;
-    const count = seg.w > 300 && level >= 2 ? 2 : 1;
-    for (let b = 0; b < count; b += 1) {
-      const minX = seg.x + 20 + b * 60;
-      const maxX = Math.min(seg.x + seg.w - 24, minX + 160 + Math.random() * 80);
-      if (maxX - minX < 60) continue;
-      bugs.push({ x: minX + Math.random() * (maxX - minX), minX, maxX, spd: 1.2 + level * .28 + Math.random() * .3, dir: 1, dead: false, deadAt: 0 });
+  for (const [si, seg] of segs.entries()) {
+    const next = segs[si + 1];
+    if (!next || li >= CHIP_LABELS.length) break;
+    const gx = seg.x + seg.w;
+    const gw = next.x - gx;
+    if (gw > 50 && gw < 150) {
+      chips.push({ x: gx + gw / 2, y: 296, label: CHIP_LABELS[li], got: false });
+      li += 1;
     }
   }
   return { plats, chips, bugs, levelW, flagX };
