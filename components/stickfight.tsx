@@ -23,6 +23,7 @@ type FighterAction = "idle" | "walk" | "punch" | "kick" | "uppercut" | "wave" | 
 type Fighter = { x: number; y: number; vy: number; dir: 1 | -1; hp: number; action: FighterAction; actionStart: number; hitDone: boolean; lastWave: number };
 type Spark = { x: number; y: number; vx: number; vy: number; life: number; maxLife: number; color: string; size: number };
 type Wave = { x: number; dir: 1 | -1; owner: "p" | "e"; life: number };
+type Ring = { x: number; y: number; r: number; life: number; maxLife: number; color: string };
 type RoundState = "intro" | "live" | "clear";
 type Difficulty = "easy" | "normal" | "hard";
 
@@ -37,6 +38,7 @@ type FightState = {
   keys: Set<string>;
   sparks: Spark[];
   waves: Wave[];
+  rings: Ring[];
   lastBurst: number;
   diff: Difficulty;
 };
@@ -55,9 +57,9 @@ const difficulties: Record<Difficulty, { label: { ko: string; en: string }; spee
 };
 
 const roundForms = [
-  { color: "#7c8ea3", speed: 2.1, dmgMul: .75, aggression: .45, jumpy: false, caster: false },
-  { color: "#42566e", speed: 2.8, dmgMul: 1, aggression: .62, jumpy: true, caster: false },
-  { color: "#101c2c", speed: 3.3, dmgMul: 1.15, aggression: .8, jumpy: true, caster: true },
+  { color: "#7c8ea3", glow: "", speed: 2.1, dmgMul: .75, aggression: .45, jumpy: false, caster: false },
+  { color: "#6f86a8", glow: "", speed: 2.8, dmgMul: 1, aggression: .62, jumpy: true, caster: false },
+  { color: "#f2c94c", glow: "#ffb46b", speed: 3.3, dmgMul: 1.15, aggression: .8, jumpy: true, caster: true },
 ] as const;
 
 const newFighter = (x: number, dir: 1 | -1): Fighter => ({ x, y: 0, vy: 0, dir, hp: 100, action: "idle", actionStart: 0, hitDone: false, lastWave: 0 });
@@ -65,7 +67,7 @@ const newFighter = (x: number, dir: 1 | -1): Fighter => ({ x, y: 0, vy: 0, dir, 
 function freshFight(state: FightState | null, round: number, diff: Difficulty, pw: number, ew: number): FightState {
   const enemy = newFighter(500, -1);
   enemy.hp = 100 * difficulties[diff].eHp;
-  return { player: newFighter(140, 1), enemy, round, pw, ew, roundState: "intro", stateStart: performance.now(), keys: state?.keys ?? new Set(), sparks: [], waves: [], lastBurst: 0, diff };
+  return { player: newFighter(140, 1), enemy, round, pw, ew, roundState: "intro", stateStart: performance.now(), keys: state?.keys ?? new Set(), sparks: [], waves: [], rings: [], lastBurst: 0, diff };
 }
 
 function burst(x: number, y: number, sparks: Spark[], count = 46, color?: string) {
@@ -123,13 +125,14 @@ function winJ(t: number): Joints {
   return { head: [0, -78 + bob], shoulder: [0, -62 + bob], hip: [0, -38], ef: [-6, -70], hf: [-12, -84 + bob], eb: [6, -70], hb: [12, -84 + bob], kf: [7, -20], ff: [5, 0], kb: [-7, -20], fb: [-5, 0] };
 }
 
-function drawStickman(ctx: CanvasRenderingContext2D, x: number, gy: number, dir: 1 | -1, color: string, j: Joints) {
+function drawStickman(ctx: CanvasRenderingContext2D, x: number, gy: number, dir: 1 | -1, color: string, j: Joints, glow = "") {
   const px = (v: Vec) => x + v[0] * dir;
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
   ctx.lineWidth = 4;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+  if (glow) { ctx.shadowColor = glow; ctx.shadowBlur = 14; }
   ctx.beginPath();
   ctx.moveTo(px(j.hip), gy + j.hip[1]); ctx.lineTo(px(j.kf), gy + j.kf[1]); ctx.lineTo(px(j.ff), gy + j.ff[1]);
   ctx.moveTo(px(j.hip), gy + j.hip[1]); ctx.lineTo(px(j.kb), gy + j.kb[1]); ctx.lineTo(px(j.fb), gy + j.fb[1]);
@@ -140,6 +143,7 @@ function drawStickman(ctx: CanvasRenderingContext2D, x: number, gy: number, dir:
   ctx.beginPath();
   ctx.arc(px(j.head), gy + j.head[1], 9, 0, Math.PI * 2);
   ctx.stroke();
+  ctx.shadowBlur = 0;
 }
 
 function jointsOf(f: Fighter, now: number): Joints {
@@ -199,15 +203,35 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: FightState, now: number, en
   ctx.fillText("○".repeat(Math.max(2 - g.ew, 0)) + "●".repeat(g.ew), W / 2 + 54, 40);
   for (const wave of g.waves) {
     const color = wave.owner === "p" ? "#4aa3ff" : "#ff7a6b";
-    ctx.globalAlpha = .85;
+    const pulse = 7 + Math.sin(now / 60 + wave.x / 20) * 1.5;
+    for (let t = 3; t >= 1; t -= 1) {
+      ctx.globalAlpha = .1 * t;
+      ctx.fillStyle = color;
+      ctx.fillRect(wave.x - wave.dir * (8 + t * 9), GROUND_Y - 50 - 3 * t, wave.dir * (6 + t * 9), 6 * t * .8);
+    }
+    ctx.globalAlpha = .9;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 16;
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(wave.x, GROUND_Y - 50, 7, 0, Math.PI * 2);
+    ctx.arc(wave.x, GROUND_Y - 50, pulse, 0, Math.PI * 2);
     ctx.fill();
-    ctx.globalAlpha = .35;
-    ctx.fillRect(wave.x - wave.dir * 20, GROUND_Y - 52, wave.dir * 20, 4);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(wave.x, GROUND_Y - 50, pulse * .45, 0, Math.PI * 2);
+    ctx.fill();
     ctx.globalAlpha = 1;
   }
+  for (const ring of g.rings) {
+    ctx.globalAlpha = Math.max(ring.life / ring.maxLife, 0) * .8;
+    ctx.strokeStyle = ring.color;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(ring.x, ring.y, ring.r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
   for (const spark of g.sparks) {
     ctx.globalAlpha = Math.max(spark.life / spark.maxLife, 0);
     ctx.fillStyle = spark.color;
@@ -222,7 +246,7 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: FightState, now: number, en
     ctx.ellipse(f.x, GROUND_Y + 4, shadow, 3.5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalAlpha = 1;
-    drawStickman(ctx, f.x, GROUND_Y - f.y, f.dir, color, jointsOf(f, now));
+    drawStickman(ctx, f.x, GROUND_Y - f.y, f.dir, color, jointsOf(f, now), f === g.enemy ? foe.glow : "");
     if (f.action === "wave") {
       const p = Math.min((now - f.actionStart) / ATTACKS.wave.dur, 1);
       const ext = Math.max(p < .45 ? p / .45 : (1 - p) / .55, 0);
@@ -448,7 +472,9 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
           if (Math.abs(target.x - wave.x) < 22 && target.y < 74 && target.action !== "ko") {
             wave.life = 0;
             const mul = wave.owner === "e" ? foe.dmgMul * dm.dmg : dm.pDmg;
-            burst(target.x, GROUND_Y - 46 - target.y, g.sparks, 16, wave.owner === "p" ? "#4aa3ff" : "#ff7a6b");
+            const waveColor = wave.owner === "p" ? "#4aa3ff" : "#ff7a6b";
+            burst(target.x, GROUND_Y - 46 - target.y, g.sparks, 16, waveColor);
+            g.rings.push({ x: target.x, y: GROUND_Y - 46 - target.y, r: 8, life: 18, maxLife: 18, color: waveColor });
             target.hp -= ATTACKS.wave.dmg * mul;
             target.x = Math.min(Math.max(target.x + wave.dir * 30, 44), W - 44);
             if (target.hp <= 0) { target.action = "ko"; target.actionStart = now; }
@@ -468,7 +494,9 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
         }
         if (e.action === "ko" || p.action === "ko") {
           const loser = e.action === "ko" ? e : p;
-          burst(loser.x, GROUND_Y - 40, g.sparks, 26, loser === p ? "#8fc3ff" : "#ffb0a0");
+          const loserColor = loser === p ? "#8fc3ff" : "#ffb0a0";
+          burst(loser.x, GROUND_Y - 40, g.sparks, 26, loserColor);
+          g.rings.push({ x: loser.x, y: GROUND_Y - 40, r: 10, life: 24, maxLife: 24, color: loserColor });
           if (e.action === "ko") { g.pw += 1; if (p.action !== "ko") { p.action = "win"; p.actionStart = now; } }
           else { g.ew += 1; }
           setScore([g.pw, g.ew]);
@@ -495,6 +523,11 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
         spark.x += spark.vx; spark.y += spark.vy; spark.vy += .045; spark.vx *= .985; spark.life -= 1;
       }
       g.sparks = g.sparks.filter((spark) => spark.life > 0);
+      for (const ring of g.rings) {
+        ring.r += 3.4;
+        ring.life -= 1;
+      }
+      g.rings = g.rings.filter((ring) => ring.life > 0);
       const revealed = phase === "won";
       drawFrame(ctx, g, now, en, revealed);
       raf = requestAnimationFrame(step);
@@ -586,10 +619,10 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
               <button type="button" aria-label={en ? "Move right" : "오른쪽 이동"} onPointerDown={() => gameRef.current.keys.add("ArrowRight")} onPointerUp={() => gameRef.current.keys.delete("ArrowRight")} onPointerLeave={() => gameRef.current.keys.delete("ArrowRight")}>▶</button>
             </div>
             <div className="sf-row sf-row--four">
-              <button type="button" className="sf-attack" onPointerDown={() => tryAttack("punch")}>{en ? "PUNCH" : "펀치"}</button>
-              <button type="button" className="sf-attack" onPointerDown={() => tryAttack("kick")}>{en ? "KICK" : "킥"}</button>
-              <button type="button" className="sf-attack" onPointerDown={() => tryAttack("uppercut")}>{en ? "UPPER" : "어퍼컷"}</button>
-              <button type="button" className="sf-attack" onPointerDown={() => tryAttack("wave")}>{en ? "WAVE" : "장풍"}</button>
+              <button type="button" className="sf-attack sf-attack--punch" onPointerDown={() => tryAttack("punch")}>{en ? "PUNCH" : "펀치"}</button>
+              <button type="button" className="sf-attack sf-attack--kick" onPointerDown={() => tryAttack("kick")}>{en ? "KICK" : "킥"}</button>
+              <button type="button" className="sf-attack sf-attack--upper" onPointerDown={() => tryAttack("uppercut")}>{en ? "UPPER" : "어퍼컷"}</button>
+              <button type="button" className="sf-attack sf-attack--wave" onPointerDown={() => tryAttack("wave")}>{en ? "WAVE" : "장풍"}</button>
             </div>
           </div>
         )}

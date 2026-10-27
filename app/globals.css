@@ -946,7 +946,15 @@ html[lang="en"] .career-metric-value > span { min-width:0; overflow-wrap:anywher
 .sf-row--run button:last-child { border-color:#5ee8a2; color:#5ee8a2; letter-spacing:.1em; }
 .sf-controls button { display:grid; min-height:50px; place-items:center; border:1px solid #315372; background:#0d2949; color:#c8ddef; font:700 13px ui-monospace,SFMono-Regular,Menlo,monospace; cursor:pointer; touch-action:none; user-select:none; }
 .sf-controls button:active { background:var(--cobalt); color:white; }
-.sf-controls .sf-attack { border-color:var(--cobalt); color:#8fc3ff; letter-spacing:.08em; }
+.sf-controls .sf-attack { border-color:var(--cobalt); color:#8fc3ff; letter-spacing:.08em; border-width:2px; }
+.sf-controls .sf-attack--punch { border-color:#4aa3ff; color:#8fc3ff; }
+.sf-controls .sf-attack--kick { border-color:#b78cff; color:#cbb0ff; }
+.sf-controls .sf-attack--upper { border-color:#ffd166; color:#ffd166; }
+.sf-controls .sf-attack--wave { border-color:#5ee8a2; color:#5ee8a2; box-shadow:0 0 10px rgba(94,232,162,.25) inset; }
+.sf-controls .sf-attack--punch:active { background:#4aa3ff; color:#fff; }
+.sf-controls .sf-attack--kick:active { background:#b78cff; color:#fff; }
+.sf-controls .sf-attack--upper:active { background:#ffd166; color:#071b32; }
+.sf-controls .sf-attack--wave:active { background:#5ee8a2; color:#071b32; }
 .sf-diff { display:flex; gap:6px; justify-content:center; }
 .sf-diff button { padding:8px 18px; border:1px solid #315372; background:#0d2949; color:#8ea9c1; font:700 12px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.06em; cursor:pointer; }
 .sf-diff button.active { border-color:#5ee8a2; color:#5ee8a2; }
