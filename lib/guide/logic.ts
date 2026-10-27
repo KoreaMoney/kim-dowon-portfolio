@@ -51,9 +51,9 @@ export const portfolioFacts = {
 const keywordGroups: Array<[GuideIntent, string[]]> = [
   ["hiring", ["채용", "뽑", "지원", "강점", "약점", "단점", "부족", "우려", "리스크", "보완", "함께", "커뮤니케이션", "문제 해결"]],
   ["frontend", ["프론트", "frontend", "react", "next", "ui", "성능", "컴포넌트", "3d"]],
-  ["agent", ["agent", "에이전트", "llm", "번역", "예약", "브라우저"]],
+  ["agent", ["agent", "에이전트", "llm", "번역", "예약", "브라우저", "와이즈덴탈", "wisedental", "wise dental"]],
   ["projects", ["프로젝트", "포트폴리오", "openstock", "openalarm", "opendata", "sweet", "성과", "숫자"]],
-  ["career", ["경력", "회사", "이력", "몇 년", "wiseai", "sbt", "infoin", "제이셋"]],
+  ["career", ["경력", "회사", "이력", "몇 년", "다닌", "다녔", "wiseai", "wise ai", "와이즈", "sbt", "에스비티", "infoin", "인포인", "제이셋", "스태츠칩팩", "스탯츠칩팩", "jset", "statschippac", "오픈도어", "opendoor"]],
   ["contact", ["연락", "이메일", "메일", "전화", "github", "linkedin"]],
 ];
 
@@ -69,6 +69,40 @@ const outOfScopePatterns = [
   /(?:함수|코드|프로그램|앱).*(?:만들어|작성해|구현해|짜줘|고쳐|풀어)/,
   /(?:만들어|작성해|구현해|짜줘|고쳐|풀어).*(?:함수|코드|프로그램|앱)/,
 ];
+
+export type GuideCompany = "wiseai" | "opendoorlabs" | "sbt" | "infoin" | "jset";
+
+const companyMentionPatterns: Array<[GuideCompany, RegExp]> = [
+  ["wiseai", /와이즈(?!\s*덴탈)|\bwise\s*ai\b/i],
+  ["opendoorlabs", /오픈\s*도어(?:\s*랩스?)?|\bopendoor(?:labs?)?\b|\bopen\s*door\s*labs?\b/i],
+  ["sbt", /에스비티|\bsbt\b/i],
+  ["infoin", /인포인|\binfoin\b/i],
+  ["jset", /제이셋|스태츠칩팩|스탯츠칩팩|\bjset\b|stats?\s*chip\s*pac/i],
+];
+
+export function detectNamedCompany(question: string): GuideCompany | null {
+  let found: GuideCompany | null = null;
+  let position = Number.POSITIVE_INFINITY;
+  for (const [company, pattern] of companyMentionPatterns) {
+    const match = pattern.exec(question);
+    if (match && match.index < position) {
+      found = company;
+      position = match.index;
+    }
+  }
+  return found;
+}
+
+export function resolveNamedCompany(question: string, history: GuideHistoryMessage[] = []): GuideCompany | null {
+  const direct = detectNamedCompany(question);
+  if (direct) return direct;
+  for (const message of [...history].reverse()) {
+    if (message.role !== "user") continue;
+    const company = detectNamedCompany(message.content);
+    if (company) return company;
+  }
+  return null;
+}
 
 export const greetingPattern = /^(?:안녕(?:하세요|하십니까|히\s*가(?:세요|주세요)?)?|하이|헬로|반갑(?:습니다|워(?:요)?|네요|다)?|좋은\s*(?:아침|오후|저녁|하루)(?:이에요|예요|입니다)?|처음\s*뵙겠습니다|hi|hello|hey|yo|hiya|howdy|good\s*(?:morning|afternoon|evening|day|night)|greetings|nice\s*to\s*meet\s*you)(?:\s+there)?[\s!?.~…,]*$/i;
 
@@ -89,8 +123,8 @@ export function detectGuideIntent(question: string, locale: GuideLocale = "ko"):
 }
 
 const followUpPatterns = [
-  /(?:더|좀 더)\s*(?:자세히|구체적으로)|예시|사례|그중|그건|그 부분|그 제품|그 프로젝트|그 agent|어떻게 했|왜 그런|AI 일기|일기 회고|3단계 알림|대표 질의|routing|계약 테스트|논문|요구사항/i,
-  /\b(?:tell me more|more detail|concrete example|an example|how so|which one|that result|that project|that product|that agent|what about that|go on|elaborate|AI diary|diary reflection|3-stage|representative queries|routing|contract tests?|papers?|requirements?|test criteria)\b/i,
+  /(?:더|좀 더)\s*(?:자세히|구체적으로)|예시|사례|그중|그건|그 부분|그 제품|그 프로젝트|그 agent|거기|그곳|어떻게 했|왜 그런|AI 일기|일기 회고|3단계 알림|대표 질의|routing|계약 테스트|논문|요구사항/i,
+  /\b(?:tell me more|more detail|concrete example|an example|how so|which one|that result|that project|that product|that agent|that company|that employer|there|what about that|go on|elaborate|AI diary|diary reflection|3-stage|representative queries|routing|contract tests?|papers?|requirements?|test criteria)\b/i,
 ];
 
 const explicitOffTopicPatterns = [
@@ -144,8 +178,27 @@ function retrieveEvidenceForFacts(intent: GuideIntent, targetRole: GuideTargetRo
   return [facts.career[0], facts.frontend[0], facts.agent[0], facts.projects[0], facts.collaboration[2]];
 }
 
-export function retrieveGuideEvidence(intent: GuideIntent, locale: GuideLocale = "ko", targetRole: GuideTargetRole = "unknown"): string[] {
-  return retrieveEvidenceForFacts(intent, targetRole, locale === "en" ? englishPortfolioFacts : portfolioFacts);
+const companyEvidence: Record<GuideCompany, (facts: GuideFacts) => string[]> = {
+  wiseai: (facts) => [facts.career[1], ...facts.agent],
+  opendoorlabs: (facts) => [facts.career[2], ...facts.projects.slice(1, 4)],
+  sbt: (facts) => [facts.career[3], facts.frontend[1]],
+  infoin: (facts) => [facts.career[3], facts.frontend[2]],
+  jset: (facts) => [facts.career[4]],
+};
+
+const companyScopableIntents = new Set<GuideIntent>(["career", "general", "hiring", "frontend", "agent", "projects"]);
+
+export function retrieveGuideEvidence(
+  intent: GuideIntent,
+  locale: GuideLocale = "ko",
+  targetRole: GuideTargetRole = "unknown",
+  question = "",
+  history: GuideHistoryMessage[] = [],
+): string[] {
+  const facts = locale === "en" ? englishPortfolioFacts : portfolioFacts;
+  const company = companyScopableIntents.has(intent) ? resolveNamedCompany(question, history) : null;
+  if (company) return companyEvidence[company](facts);
+  return retrieveEvidenceForFacts(intent, targetRole, facts);
 }
 
 const suggestionsByIntent: Record<GuideIntent, Record<GuideLocale, string[]>> = {
@@ -313,6 +366,33 @@ const hiringStepSets: Record<"frontend" | "agent" | "general", HiringStepSet> = 
   },
 };
 
+const companyFallbackAnswers: Record<GuideCompany, Record<GuideLocale, string>> = {
+  wiseai: {
+    ko: "저는 WiseAI에서 AI Agent Pro · Frontend로 병원 상담예약 Agent와 10개 언어 실시간 번역 Agent를 개발합니다. 중복 모델 호출을 제거해 번역 처리 시간을 내부 측정 15초에서 7초로 줄였고, 병원 정보와 AI 상담, 상담원 연결, 예약 생성·조회·변경·취소를 한 대화로 연결했습니다.",
+    en: "At WiseAI, I work as AI Agent Pro · Frontend building a hospital consultation and booking Agent and a real-time translation Agent for 10 languages. I removed duplicate model calls to cut translation processing from 15 seconds to 7 seconds in internal measurements, and connected hospital information, AI consultation, staff handoff, and reservation create-view-change-cancel flows in one conversation.",
+  },
+  opendoorlabs: {
+    ko: "저는 OpenDoorLabs의 Founder · AI Product Engineer로 OpenStockAI, OpenDataLabs, OpenAlarm을 설계하고 운영합니다. OpenStockAI는 300개 대표 질의와 175개 routing 계약 테스트로, OpenDataLabs는 8개 논문을 40개 요구사항과 40개 테스트로 검증합니다.",
+    en: "At OpenDoorLabs, I work as Founder · AI Product Engineer, designing and operating OpenStockAI, OpenDataLabs, and OpenAlarm. OpenStockAI is verified with 300 representative queries and 175 routing contract tests, and OpenDataLabs turns 8 papers into 40 requirements and 40 tests.",
+  },
+  sbt: {
+    ko: "저는 SBT Global에서 Frontend Engineer · AI Agent로 일했습니다. AI LayoutEditor 로딩을 내부 측정 45초에서 8초로 줄이고 메모리 사용량을 40% 낮췄으며 100개 이상 컴포넌트를 다뤘습니다.",
+    en: "At SBT Global, I worked as Frontend Engineer · AI Agent. I reduced AI LayoutEditor loading from 45 seconds to 8 seconds in internal measurements, lowered memory usage by 40%, and handled more than 100 components.",
+  },
+  infoin: {
+    ko: "저는 Infoin에서 Frontend Engineer로 3D 디지털 트윈, 시뮬레이션, 키오스크 제품의 프론트엔드를 개발했습니다. 3D 로딩을 35초에서 15초로 줄이고 메모리를 1.95GB에서 912MB로 낮췄습니다.",
+    en: "At Infoin, I worked as a Frontend Engineer on 3D digital twin, simulation, and kiosk products. I reduced 3D loading from 35 seconds to 15 seconds and memory usage from 1.95GB to 912MB.",
+  },
+  jset: {
+    ko: "저는 제이셋스태츠칩팩코리아(유)에서 QA ShiftLeader 책임으로 공정 불량 추적·통계 대시보드와 품질 이슈 알림을 개발했습니다.",
+    en: "At JSET StatsChipPAC Korea Co., Ltd., I worked as a QA ShiftLeader and built a process defect tracking and statistics dashboard with quality issue notifications.",
+  },
+};
+
+export function fallbackCompanyAnswer(company: GuideCompany, locale: GuideLocale): string {
+  return companyFallbackAnswers[company][locale];
+}
+
 export function fallbackGuideAnswer(
   intent: GuideIntent,
   locale: GuideLocale = "ko",
@@ -327,6 +407,10 @@ export function fallbackGuideAnswer(
     if (targetRole === "frontend") return locale === "en" ? "I count AI LayoutEditor and a 3D digital twin among my representative Frontend projects. I reduced LayoutEditor loading from 45 seconds to 8 seconds in internal measurements, and reduced the 3D product's loading from 35 seconds to 15 seconds." : "저는 AI LayoutEditor와 3D 디지털 트윈을 대표 프론트엔드 프로젝트로 꼽습니다. LayoutEditor 로딩은 내부 측정 45초에서 8초로, 3D 제품 로딩은 35초에서 15초로 줄였습니다.";
     if (targetRole === "agent") return locale === "en" ? "I count the 10-language Translation Agent, Hospital Consultation and Booking Agent, OpenStockAI, OpenDataLabs, and OpenAlarm among my representative AI Agent projects. The documented work spans product flows, routing contract tests, research-to-requirement conversion, and three-stage notifications." : "저는 10개 언어 번역 Agent, 병원 상담예약 Agent, OpenStockAI, OpenDataLabs, OpenAlarm을 대표 AI Agent 프로젝트로 꼽습니다. 제품 흐름 구축, routing 계약 테스트, 논문 기반 요구사항 변환, 3단계 알림 구현을 각각 확인할 수 있습니다.";
     return locale === "en" ? "Among my 19 builds, I count AI LayoutEditor, the 10-language Translation Agent, OpenStockAI, the Hospital Consultation and Booking Agent, OpenDataLabs, and OpenAlarm as representative projects. They show both measured Frontend improvement and AI Agent product verification." : "저는 19개 build 가운데 AI LayoutEditor, 10개 언어 번역 Agent, OpenStockAI, 병원 상담예약 Agent, OpenDataLabs, OpenAlarm을 대표 프로젝트로 꼽습니다. 측정 가능한 프론트엔드 개선과 AI Agent 제품 검증을 함께 보여줍니다.";
+  }
+  if (intent === "career") {
+    const company = detectNamedCompany(question);
+    if (company) return fallbackCompanyAnswer(company, locale);
   }
   if (intent === "hiring" && isHiringConcernQuestion(question)) {
     if (locale === "en") return fallbackEnglishGuideAnswer(intent, question);

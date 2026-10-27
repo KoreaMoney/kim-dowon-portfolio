@@ -1,5 +1,5 @@
-import type { GuideIntent, GuideLocale } from "./logic";
-import type { GuideEvidenceId, GuideTargetRole } from "./safety";
+import { resolveNamedCompany, type GuideCompany, type GuideIntent, type GuideLocale } from "./logic";
+import type { GuideEvidenceId, GuideHistoryMessage, GuideTargetRole } from "./safety";
 import { CONTACT } from "@/lib/contact";
 
 export type GuideCard = {
@@ -380,6 +380,14 @@ function freshCards(defs: GuideCardDef[], coveredEvidence: GuideEvidenceId[]): G
   return defs.filter((def) => !def.evidence || !coveredEvidence.includes(def.evidence));
 }
 
+const careerCardIndex: Record<GuideCompany, number> = {
+  opendoorlabs: 0,
+  wiseai: 1,
+  sbt: 2,
+  infoin: 3,
+  jset: 4,
+};
+
 // Localize, drop duplicate titles (shared defs appear in several intents), then cap.
 function presentCards(defs: GuideCardDef[], locale: GuideLocale, limit?: number): GuideCard[] {
   const seen = new Set<string>();
@@ -396,7 +404,13 @@ export function guideCards(
   locale: GuideLocale = "ko",
   targetRole: GuideTargetRole = "unknown",
   coveredEvidence: GuideEvidenceId[] = [],
+  question = "",
+  history: GuideHistoryMessage[] = [],
 ): GuideCard[] {
+  if (intent === "career") {
+    const company = resolveNamedCompany(question, history);
+    if (company) return presentCards([cardsByIntent.career[careerCardIndex[company]]], locale);
+  }
   if (intent === "projects") {
     if (targetRole === "frontend") return presentCards(cardsByIntent.frontend, locale, 2);
     if (targetRole === "agent") return presentCards(cardsByIntent.agent, locale);

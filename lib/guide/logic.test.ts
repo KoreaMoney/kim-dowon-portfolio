@@ -534,3 +534,60 @@ test("fallback evidence and cards progress to a bounded wrap-up instead of cycli
   assert.match(agentAnswers.at(-1) ?? "", /will not recycle/);
   assert.deepEqual(guideCards("hiring", "en", "agent", agentMemory.coveredEvidence), []);
 });
+
+test("named company questions route to career and answer from that employer's evidence", () => {
+  const careerQuestions = [
+    "와이즈에이아이에서 뭐했어?",
+    "와이즈에이아이에서는 어떤 일을 했나요?",
+    "WiseAI에서 뭐 했어?",
+    "SBT에서는 어떤 일을 했어?",
+    "인포인에서 뭐했어?",
+    "오픈도어랩스에서 뭐해?",
+    "제이셋스태츠칩팩에서 뭐 했어?",
+  ];
+  for (const question of careerQuestions) {
+    assert.equal(detectGuideIntent(question), "career", question);
+  }
+  assert.equal(detectGuideIntent("What did you do at WiseAI?", "en"), "career");
+  assert.equal(detectGuideIntent("What did you do at OpenDoorLabs?", "en"), "career");
+  assert.equal(detectGuideIntent("Tell me about your work at Infoin", "en"), "career");
+
+  const wiseEvidence = retrieveGuideEvidence("career", "ko", "unknown", "와이즈에이아이에서 뭐했어?").join(" ");
+  assert.match(wiseEvidence, /WiseAI/);
+  assert.match(wiseEvidence, /번역/);
+  assert.match(wiseEvidence, /상담예약/);
+
+  const sbtEvidence = retrieveGuideEvidence("career", "ko", "unknown", "SBT에서 뭐했어?").join(" ");
+  assert.match(sbtEvidence, /SBT Global/);
+  assert.match(sbtEvidence, /LayoutEditor/);
+  assert.doesNotMatch(sbtEvidence, /OpenAlarm/);
+
+  assert.deepEqual(guideCards("career", "ko", "unknown", [], "와이즈에이아이에서 뭐했어?").map((card) => card.title), ["WiseAI"]);
+  assert.deepEqual(guideCards("career", "en", "unknown", [], "What did you do at Infoin?").map((card) => card.title), ["Infoin"]);
+
+  const wiseAnswer = fallbackGuideAnswer("career", "ko", "와이즈에이아이에서 뭐했어?");
+  assert.match(wiseAnswer, /WiseAI/);
+  assert.match(wiseAnswer, /번역|상담예약/);
+  assert.match(wiseAnswer, /저는/);
+  assert.doesNotMatch(wiseAnswer, /다루지 않아요/);
+
+  const englishAnswer = fallbackGuideAnswer("career", "en", "What did you do at WiseAI?");
+  assert.match(englishAnswer, /WiseAI/);
+  assert.match(englishAnswer, /\bI\b/);
+  assert.doesNotMatch(englishAnswer, /[가-힣]/);
+
+  assert.deepEqual(
+    guideCards("career").map((card) => card.title),
+    ["OpenDoorLabs", "WiseAI", "SBT Global", "Infoin", "제이셋스태츠칩팩코리아(유)"],
+  );
+});
+
+test("company context survives a generic follow-up question", () => {
+  const history = [{ role: "user" as const, content: "와이즈에이아이에서 다녔어요?" }];
+  assert.equal(resolveGuideIntent("거기서 뭐 했어?", "ko", history), "career");
+  assert.match(
+    retrieveGuideEvidence("career", "ko", "unknown", "거기서 뭐 했어?", history).join(" "),
+    /WiseAI/,
+  );
+  assert.deepEqual(guideCards("career", "ko", "unknown", [], "거기서 뭐 했어?", history).map((card) => card.title), ["WiseAI"]);
+});

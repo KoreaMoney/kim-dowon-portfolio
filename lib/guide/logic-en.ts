@@ -1,4 +1,4 @@
-import { greetingPattern, isIdentityQuestion, type GuideIntent } from "./logic";
+import { detectNamedCompany, fallbackCompanyAnswer, greetingPattern, isIdentityQuestion, type GuideIntent } from "./logic";
 import { CONTACT } from "@/lib/contact";
 
 export const englishPortfolioFacts = {
@@ -65,9 +65,9 @@ export function detectEnglishGuideIntent(question: string): GuideIntent {
   if (includesAny(normalized, ["contact", "email", "e-mail", "phone", "github", "linkedin", "reach you", "get in touch", "연락", "이메일", "메일", "전화"])) return "contact";
   if (/\bwhy\b.*\bhire\b|\bhire\s+(?:you|him|kim)|\bcandidate\b|\brecruit(?:ing|er)?\b|\b(?:weakness(?:es)?|shortcomings?|gaps?|concerns?|risks?|downsides?|limitations?)\b/.test(normalized) || includesAny(normalized, ["채용", "뽑", "지원", "강점", "약점", "단점", "부족", "우려", "리스크", "보완", "왜", "커뮤니케이션", "문제 해결"])) return "hiring";
   if (/\bui\b/.test(normalized) || includesAny(normalized, ["frontend", "front-end", "front end", "react", "next.js", "nextjs", "typescript", "user interface", "performance", "component", "3d", "digital twin", "layouteditor", "프론트", "성능", "컴포넌트"])) return "frontend";
-  if (includesAny(normalized, ["ai agent", "agent experience", "llm", "translation agent", "booking agent", "browser agent", "observer agent", "langgraph", "langchain", "에이전트", "번역", "예약", "브라우저"])) return "agent";
+  if (includesAny(normalized, ["ai agent", "agent experience", "llm", "translation agent", "booking agent", "browser agent", "observer agent", "langgraph", "langchain", "wise dental", "wisedental", "와이즈덴탈", "에이전트", "번역", "예약", "브라우저"])) return "agent";
   if (includesAny(normalized, ["project", "portfolio", "builds", "case study", "openstock", "openalarm", "opendata", "sweet-diagram", "sweet diagram", "what did you build", "what have you built", "프로젝트", "포트폴리오", "성과", "숫자"])) return "projects";
-  if (includesAny(normalized, ["career", "work history", "employment", "companies", "company", "years of experience", "current role", "previous role", "where did you work", "where have you worked", "experience", "경력", "회사", "이력", "몇 년"])) return "career";
+  if (includesAny(normalized, ["career", "work history", "employment", "companies", "company", "years of experience", "current role", "previous role", "where did you work", "where have you worked", "worked at", "experience", "wiseai", "wise ai", "opendoorlabs", "opendoor", "sbt", "infoin", "jset", "statschippac", "경력", "회사", "이력", "몇 년", "다닌", "다녔", "와이즈", "오픈도어", "에스비티", "인포인", "제이셋", "스태츠칩팩"])) return "career";
   if (includesAny(normalized, ["strength", "strong point", "fit for", "value to", "work with you", "problem solving", "collaboration", "communication", "협업"])) return "hiring";
   if (includesAny(normalized, ["kim dowon", "dowon kim", "developer", "introduce yourself", "about you", "who are you", "skills", "work style", "product", "user value", "what do you do", "김도원", "개발자", "소개", "역량", "경험", "업무", "제품", "사용자", "가치"]) || isIdentityQuestion(normalized)) return "general";
   return "out_of_scope";
@@ -83,7 +83,11 @@ export function fallbackEnglishGuideAnswer(intent: GuideIntent, question = ""): 
   if (intent === "openalarm" && /diary|reflection/i.test(question)) return "I implemented an AI diary reflection in OpenAlarm. This portfolio does not document its detailed behavior.";
   if (intent === "openalarm") return "I built OpenAlarm with 3-stage wake-up, preparation, and departure notifications plus an AI diary reflection. This portfolio does not document the Agent architecture or implementation stack.";
   if (intent === "projects") return "I documented 19 builds across Frontend, AI Agents, and 3D products. OpenStockAI uses 300 representative queries and 175 routing contract tests. Would you like me to choose the project closest to your role?";
-  if (intent === "career") return "I currently work as AI Agent Pro · Frontend at WiseAI while also serving as Founder · AI Product Engineer at OpenDoorLabs. I started with QA field tools and expanded into 3D frontend and AI product development. Would you like my current scope or results from a previous company first?";
+  if (intent === "career") {
+    const company = detectNamedCompany(question);
+    if (company) return fallbackCompanyAnswer(company, "en");
+    return "I currently work as AI Agent Pro · Frontend at WiseAI while also serving as Founder · AI Product Engineer at OpenDoorLabs. I started with QA field tools and expanded into 3D frontend and AI product development. Would you like my current scope or results from a previous company first?";
+  }
   if (intent === "contact") return "I can be reached by email or phone. You can also review my public work through my GitHub and LinkedIn profiles.";
   if (intent === "greeting") return "Hello! I'm Kim Dowon, and I build products that connect Frontend and AI Agents. Ask me about my hiring strengths, representative projects, or how I work with teams.";
   if (intent === "out_of_scope") return "That topic sits outside this guide. I can share verified evidence from my Frontend and AI Agent work. Would my hiring strengths or a representative project help you more?";

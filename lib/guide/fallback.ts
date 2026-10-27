@@ -43,7 +43,7 @@ export function guideFallbackPayload(
     answer,
     suggestions: guideSuggestions(intent, locale, targetRole),
     source: "portfolio" as const,
-    cards: guideCards(intent, locale, targetRole, resolvedMemory.coveredEvidence),
+    cards: guideCards(intent, locale, targetRole, resolvedMemory.coveredEvidence, question, safeHistory),
     memory: advanceGuideMemory(resolvedMemory, intent, targetRole, answer),
   };
 }

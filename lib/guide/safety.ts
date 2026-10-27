@@ -126,7 +126,7 @@ export function validateGuideAnswer(answer: string, locale: GuideLocale, evidenc
   if (locale === "en" && /[가-힣]/.test(normalized)) return null;
   if (locale === "ko" && !/(?:저는|제가|저의|저를|저에게)/.test(normalized)) return null;
   if (/(?:WiseAI.{0,120}LayoutEditor|LayoutEditor.{0,120}WiseAI)/i.test(normalized)) return null;
-  if (intent === "hiring" && !/WiseAI|SBT|Infoin|제이셋|company|회사/i.test(question) && /WiseAI|SBT Global|Infoin|JSET/i.test(normalized)) return null;
+  if (intent === "hiring" && !/WiseAI|와이즈|SBT|에스비티|Infoin|인포인|제이셋|스태츠칩팩|스탯츠칩팩|OpenDoor|오픈도어|JSET|company|회사/i.test(question) && /WiseAI|SBT Global|Infoin|JSET|OpenDoor/i.test(normalized)) return null;
   if (intent === "openalarm" && /일정|일상|강화|사용자 경험|입력|출력|사용 사례|schedule|routine|strengthen|user experience|input|output|use case/i.test(normalized)) return null;
   if ((intent === "openstock" || intent === "opendata" || intent === "openalarm") && /보여드릴|알려드릴|설명드릴까요|확인해 보실까요|would you like|I can show|I can explain|which .{0,40}(?:help|explore|explain)/i.test(normalized)) return null;
 

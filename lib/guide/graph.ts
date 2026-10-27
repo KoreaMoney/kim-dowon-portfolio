@@ -61,7 +61,7 @@ const routeIntent: typeof GuideState.Node = (state) => {
 };
 
 const retrieveEvidence: typeof GuideState.Node = (state) => ({
-  context: retrieveGuideEvidence(state.intent, state.locale, state.memory.targetRole),
+  context: retrieveGuideEvidence(state.intent, state.locale, state.memory.targetRole, state.question, state.history),
 });
 
 function readTextContent(content: unknown): string {
@@ -86,7 +86,7 @@ const answerQuestion: typeof GuideState.Node = async (state, config) => {
   if (!process.env.OPENAI_API_KEY) return { answer: fallback, source: "portfolio" };
 
   try {
-    const cards = guideCards(state.intent, state.locale, state.memory.targetRole, state.memory.coveredEvidence);
+    const cards = guideCards(state.intent, state.locale, state.memory.targetRole, state.memory.coveredEvidence, state.question, state.history);
     const allowsRecap = /요약|다시|비교|정리|recap|summar|compare|again/i.test(state.question);
     const shouldAskRole = (state.intent === "hiring" || state.intent === "general") && state.memory.targetRole === "unknown" && !state.memory.roleAsked;
     const response = await guideModel.invoke(
@@ -149,7 +149,7 @@ export async function runGuide(
     answer: result.answer,
     suggestions: result.suggestedPrompts,
     source: result.source,
-    cards: guideCards(result.intent, locale, result.memory.targetRole, result.memory.coveredEvidence),
+    cards: guideCards(result.intent, locale, result.memory.targetRole, result.memory.coveredEvidence, question, safeHistory),
     memory: nextMemory,
   };
 }
