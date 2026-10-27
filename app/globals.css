@@ -939,11 +939,10 @@ html[lang="en"] .career-metric-value > span { min-width:0; overflow-wrap:anywher
 }
 
 /* Stickman bout controls */
-.sf-controls { display:grid; gap:8px; }
-.sf-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-.sf-row--four { grid-template-columns:repeat(4,1fr); }
-.sf-row--run { grid-template-columns:1fr 1fr 1.8fr; }
-.sf-row--run button:last-child { border-color:#5ee8a2; color:#5ee8a2; letter-spacing:.1em; }
+.sf-controls { display:flex; flex-direction:column; gap:8px; max-width:640px; width:100%; margin-inline:auto; }
+.sf-row { display:flex; gap:8px; }
+.sf-row > button { flex:1 1 0; }
+.sf-row--run > button:last-child { flex:1.8 1 0; border-color:#5ee8a2; color:#5ee8a2; letter-spacing:.1em; }
 .sf-controls button { display:grid; min-height:50px; place-items:center; border:1px solid #315372; background:#0d2949; color:#c8ddef; font:700 13px ui-monospace,SFMono-Regular,Menlo,monospace; cursor:pointer; touch-action:none; user-select:none; }
 .sf-controls button:active { background:var(--cobalt); color:white; }
 .sf-controls .sf-attack { border-color:var(--cobalt); color:#8fc3ff; letter-spacing:.08em; border-width:2px; }
@@ -960,5 +959,5 @@ html[lang="en"] .career-metric-value > span { min-width:0; overflow-wrap:anywher
 .sf-diff button.active { border-color:#5ee8a2; color:#5ee8a2; }
 .sf-diff button:hover { color:#eaf4ff; }
 @media (min-width:681px) {
-  .sf-controls { max-width:640px; margin:auto; }
+  .sf-controls { margin-inline:auto; }
 }

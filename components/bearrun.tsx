@@ -33,6 +33,7 @@ type RunState = {
   bugs: Bug[];
   camX: number;
   cpX: number;
+  hurtAt: number;
   keys: Set<string>;
   sparks: Spark[];
   lastBurst: number;
@@ -77,18 +78,19 @@ function freshRun(): RunState {
     bugs: bugDefs.map((b) => ({ ...b, dir: 1 as const, dead: false, deadAt: 0 })),
     camX: 0,
     cpX: 50,
+    hurtAt: 0,
     keys: new Set(),
     sparks: [],
     lastBurst: 0,
   };
 }
 
-function burst(x: number, y: number, sparks: Spark[]) {
-  for (let i = 0; i < 46; i += 1) {
+function burst(x: number, y: number, sparks: Spark[], count = 46, color?: string) {
+  for (let i = 0; i < count; i += 1) {
     const angle = Math.random() * Math.PI * 2;
     const speed = 1.4 + Math.random() * 3.4;
     const life = 55 + Math.random() * 40;
-    sparks.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 1, life, maxLife: life, color: SPARK_COLORS[i % SPARK_COLORS.length], size: 1.5 + Math.random() * 2 });
+    sparks.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 1, life, maxLife: life, color: color ?? SPARK_COLORS[i % SPARK_COLORS.length], size: 1.5 + Math.random() * 2 });
   }
 }
 
@@ -151,6 +153,8 @@ function drawBug(ctx: CanvasRenderingContext2D, b: Bug, now: number) {
 function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: boolean, phase: string) {
   ctx.fillStyle = "#071b32";
   ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  if (now - g.hurtAt < 320) ctx.translate((Math.random() - .5) * 5, (Math.random() - .5) * 5);
   const cam = g.camX;
   ctx.strokeStyle = "rgba(143,195,255,.07)";
   ctx.lineWidth = 1;
@@ -214,7 +218,7 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
   for (const spark of g.sparks) {
     ctx.globalAlpha = Math.max(spark.life / spark.maxLife, 0);
     ctx.fillStyle = spark.color;
-    ctx.fillRect(spark.x - cam * 0, spark.y, spark.size, spark.size);
+    ctx.fillRect(spark.x - cam, spark.y, spark.size, spark.size);
   }
   ctx.globalAlpha = 1;
   const blink = now < g.p.invUntil && Math.floor(now / 80) % 2 === 0;
@@ -222,7 +226,7 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
     const dir = (g.p.vx >= 0 ? 1 : -1) as 1 | -1;
     drawBear(ctx, g.p.x - cam, g.p.y, dir, now, Math.abs(g.p.vx) > .4 && g.p.grounded);
   }
-  ctx.fillStyle = "#8ea9c1";
+  ctx.fillStyle = "#ff6b5a";
   ctx.font = "600 10px ui-monospace, SFMono-Regular, Menlo, monospace";
   ctx.textAlign = "left";
   ctx.fillText("♥".repeat(Math.max(g.p.hearts, 0)) || "—", 16, 24);
@@ -238,6 +242,7 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
     ctx.font = "600 10px ui-monospace, SFMono-Regular, Menlo, monospace";
     ctx.fillText(en ? "find who planted the flag" : "플래그를 꽂은 주인을 찾아보세요", W / 2, H - 16);
   }
+  ctx.restore();
 }
 
 export function BearRun({ onExit }: { onExit?: () => void }) {
@@ -274,7 +279,11 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
   const tryJump = () => {
     const g = gameRef.current;
     if (phaseRef.current !== "run") return;
-    if (g.p.grounded) { g.p.vy = JUMP_V; g.p.grounded = false; }
+    if (g.p.grounded) {
+      g.p.vy = JUMP_V;
+      g.p.grounded = false;
+      burst(g.p.x, GROUND_TOP, g.sparks, 6, "#8fc3ff");
+    }
   };
 
   useEffect(() => {
@@ -344,10 +353,18 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
             p.vx = 0;
           }
         }
-        if (p.grounded) g.cpX = p.x;
+        if (p.grounded) {
+          g.cpX = p.x;
+          if (Math.abs(p.vx) > 3 && Math.floor(now / 90) % 2 === 0) {
+            g.sparks.push({ x: p.x - Math.sign(p.vx) * 10, y: GROUND_TOP - 2, vx: -p.vx * .15, vy: -1 - Math.random(), life: 16, maxLife: 16, color: "#315372", size: 2 + Math.random() * 2 });
+          }
+        }
         for (const chip of g.chips) {
           if (chip.got) continue;
-          if (overlaps(p.x - PW / 2 - 4, p.y - 4, PW + 8, PH + 8, chip.x - 12, chip.y - 10, 24, 20)) chip.got = true;
+          if (overlaps(p.x - PW / 2 - 4, p.y - 4, PW + 8, PH + 8, chip.x - 12, chip.y - 10, 24, 20)) {
+            chip.got = true;
+            burst(chip.x, chip.y, g.sparks, 10, "#5ee8a2");
+          }
         }
         for (const bug of g.bugs) {
           if (bug.dead) continue;
@@ -360,11 +377,15 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
             bug.deadAt = now;
             p.vy = -9;
             p.grounded = false;
+            burst(bug.x, GROUND_TOP - 16, g.sparks, 12, "#b0524a");
+            g.hurtAt = now;
           } else if (now >= p.invUntil) {
             p.hearts -= 1;
             p.invUntil = now + 1300;
             p.vx = (p.x < bug.x ? -1 : 1) * 6;
             p.vy = -6;
+            g.hurtAt = now;
+            burst(p.x, p.y + 14, g.sparks, 14, "#ff6b5a");
             if (p.hearts <= 0) setPhase("lost");
           }
         }
@@ -378,6 +399,8 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
             p.vx = 0;
             p.vy = 0;
             p.invUntil = now + 1500;
+            g.hurtAt = now;
+            burst(p.x, p.y + 20, g.sparks, 10, "#8fc3ff");
           }
         }
         if (p.x >= FLAG_X) setPhase("won");
@@ -385,13 +408,13 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
       if (phase === "won" && !reduced) {
         if (now - g.lastBurst > 340) {
           g.lastBurst = now;
-          burst(70 + Math.random() * (W - 140), 50 + Math.random() * 190, g.sparks);
+          burst(g.camX + 70 + Math.random() * (W - 140), 50 + Math.random() * 190, g.sparks);
         }
-        for (const spark of g.sparks) {
-          spark.x += spark.vx; spark.y += spark.vy; spark.vy += .045; spark.vx *= .985; spark.life -= 1;
-        }
-        g.sparks = g.sparks.filter((spark) => spark.life > 0);
       }
+      for (const spark of g.sparks) {
+        spark.x += spark.vx; spark.y += spark.vy; spark.vy += .045; spark.vx *= .985; spark.life -= 1;
+      }
+      g.sparks = g.sparks.filter((spark) => spark.life > 0);
       g.camX = Math.min(Math.max(p.x - W * .38, 0), LEVEL_W - W);
       drawFrame(ctx, g, now, en, phase);
       raf = requestAnimationFrame(step);

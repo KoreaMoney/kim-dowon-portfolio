@@ -600,7 +600,7 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
                 {en ? "Thinks about the product," : "제품을 생각하고"}<br />
                 {en ? "thinks about the business," : "기업을 생각하고"}<br />
                 {en ? "communicates brilliantly —" : "의사소통이 뛰어난"}<br />
-                <b>{en ? "Kim Dowon. Recommended. (He fights well too.)" : "김도원 추천합니다. (싸움도 잘합니다.)"}</b>
+                <b>{en ? "Kim Dowon. Recommended." : "김도원 추천합니다."}</b>
               </p>
               <div className="bb-promo-actions">
                 <Button asChild><Link href="/work">{en ? "View projects" : "프로젝트 보기"} <ArrowRightIcon size={17} /></Link></Button>
