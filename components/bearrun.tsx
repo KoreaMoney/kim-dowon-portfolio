@@ -98,53 +98,127 @@ function overlaps(ax: number, ay: number, aw: number, ah: number, bx: number, by
   return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
 
-function drawBear(ctx: CanvasRenderingContext2D, x: number, y: number, dir: 1 | -1, t: number, moving: boolean) {
-  const bob = moving ? Math.sin(t / 90) * 1.6 : Math.sin(t / 400) * 1;
-  const bodyY = y + bob;
-  ctx.fillStyle = "#4aa3ff";
-  ctx.strokeStyle = "#4aa3ff";
-  ctx.lineWidth = 2;
+function drawBear(ctx: CanvasRenderingContext2D, x: number, y: number, dir: 1 | -1, t: number, moving: boolean, airborne: boolean) {
+  const run = Math.sin(t / 80);
+  const bob = airborne ? 0 : moving ? -Math.abs(run) * 2 : Math.sin(t / 400);
+  const outline = "#0a2240";
+  const fur = "#2f7fe0";
+  const inner = "#78b7ff";
+  const face = "#eaf4ff";
+  const muzzle = "#0d2949";
+  const footY = y + PH - 3;
+  const kick = airborne ? 2.5 : moving ? run * 4 : 0;
+  ctx.fillStyle = "#1d5cb8";
   ctx.beginPath();
-  ctx.roundRect(x - 11, bodyY + 8, 22, PH - 8, 7);
+  ctx.ellipse(x - 6 - kick, footY - (airborne ? 4 : 0), 4.6, 3.2, 0, 0, Math.PI * 2);
+  ctx.ellipse(x + 6 + kick, footY, 4.6, 3.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const bodyTop = y + 14 + bob;
+  ctx.fillStyle = fur;
+  ctx.strokeStyle = outline;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(x - 10.5, bodyTop, 21, PH - 16 - bob, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = inner;
+  ctx.beginPath();
+  ctx.roundRect(x - 5.5, bodyTop + 9, 11, PH - 27 - bob, 5);
+  ctx.fill();
+  const armSwing = moving && !airborne ? -run * 5 : 0;
+  ctx.fillStyle = fur;
+  ctx.strokeStyle = outline;
+  ctx.beginPath();
+  ctx.ellipse(x + dir * 10, bodyTop + 10 + armSwing * .4, 3.4, 6, dir * .35, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(x - dir * 10.5, bodyTop + 12 - armSwing * .4, 3, 4.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const hy = y + 9 + bob * 1.2;
+  ctx.fillStyle = fur;
+  ctx.strokeStyle = outline;
+  ctx.beginPath();
+  ctx.arc(x - 7, hy - 7, 4.6, 0, Math.PI * 2);
+  ctx.arc(x + 7, hy - 7, 4.6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = inner;
+  ctx.beginPath();
+  ctx.arc(x - 7, hy - 7, 2.3, 0, Math.PI * 2);
+  ctx.arc(x + 7, hy - 7, 2.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = fur;
+  ctx.strokeStyle = outline;
+  ctx.beginPath();
+  ctx.arc(x, hy, 10.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = muzzle;
+  ctx.beginPath();
+  ctx.ellipse(x + dir * 2.5, hy + 4.5, 5.4, 3.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = face;
+  ctx.beginPath();
+  ctx.roundRect(x + dir * 4 - 2.4, hy + 1.4, 4.8, 2.6, 1);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(x, bodyY + 4, 9.5, 0, Math.PI * 2);
+  ctx.arc(x - 3.6 + dir * 1.5, hy - 2.5, 1.9, 0, Math.PI * 2);
+  ctx.arc(x + 3.6 + dir * 1.5, hy - 2.5, 1.9, 0, Math.PI * 2);
   ctx.fill();
+  ctx.strokeStyle = face;
+  ctx.lineWidth = 1.4;
   ctx.beginPath();
-  ctx.arc(x - 6.5, bodyY - 4, 3.6, 0, Math.PI * 2);
-  ctx.arc(x + 6.5, bodyY - 4, 3.6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#071b32";
-  ctx.beginPath();
-  ctx.arc(x - 6.5, bodyY - 4, 1.7, 0, Math.PI * 2);
-  ctx.arc(x + 6.5, bodyY - 4, 1.7, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(x + dir * 3.5, bodyY + 3, 1.6, 0, Math.PI * 2);
-  ctx.arc(x + dir * 8.5, bodyY + 3, 1.6, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(x + dir * 2.5 - 2, hy + 7);
+  ctx.quadraticCurveTo(x + dir * 2.5, hy + 8.6, x + dir * 2.5 + 2, hy + 7);
+  ctx.stroke();
 }
 
 function drawBug(ctx: CanvasRenderingContext2D, b: Bug, now: number) {
   const squish = b.dead ? Math.min((now - b.deadAt) / 240, 1) : 0;
-  const h = 16 * (1 - squish * .75);
+  const h = 17 * (1 - squish * .72);
   const y = GROUND_TOP - h;
   ctx.globalAlpha = b.dead ? 1 - squish : 1;
-  ctx.fillStyle = "#b0524a";
-  ctx.beginPath();
-  ctx.roundRect(b.x - 12, y, 24, h, 6);
-  ctx.fill();
   if (!b.dead) {
-    ctx.strokeStyle = "#b0524a";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#8a3f39";
+    ctx.lineWidth = 1.8;
+    ctx.lineCap = "round";
+    for (let l = 0; l < 3; l += 1) {
+      const wig = Math.sin(now / 70 + l * 2.1) * 2.6;
+      ctx.beginPath();
+      ctx.moveTo(b.x - 6 + l * 6, y + h - 4);
+      ctx.lineTo(b.x - 9 + l * 6 + wig, GROUND_TOP + 1);
+      ctx.stroke();
+    }
     ctx.beginPath();
-    ctx.moveTo(b.x - 5, y + 2); ctx.lineTo(b.x - 8, y - 5);
-    ctx.moveTo(b.x + 5, y + 2); ctx.lineTo(b.x + 8, y - 5);
+    ctx.moveTo(b.x - 4, y + 3); ctx.lineTo(b.x - 8, y - 6);
+    ctx.moveTo(b.x + 4, y + 3); ctx.lineTo(b.x + 8, y - 6);
     ctx.stroke();
+    ctx.fillStyle = "#ff8a7a";
+    ctx.beginPath();
+    ctx.arc(b.x - 8, y - 6, 1.6, 0, Math.PI * 2);
+    ctx.arc(b.x + 8, y - 6, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = "#c05a52";
+  ctx.strokeStyle = "#6e2f2a";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(b.x - 12, y, 24, h, 7);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#7c352f";
+  ctx.fillRect(b.x - 12, y + h * .55, 24, 1.5);
+  if (!b.dead) {
+    ctx.fillStyle = "#ffd9d4";
+    ctx.beginPath();
+    ctx.arc(b.x + b.dir * 4, y + 5, 2.2, 0, Math.PI * 2);
+    ctx.arc(b.x + b.dir * 9, y + 5, 2.2, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = "#071b32";
     ctx.beginPath();
-    ctx.arc(b.x + b.dir * 5, y + 6, 2, 0, Math.PI * 2);
-    ctx.arc(b.x + b.dir * 10, y + 6, 2, 0, Math.PI * 2);
+    ctx.arc(b.x + b.dir * 4.6, y + 5, 1, 0, Math.PI * 2);
+    ctx.arc(b.x + b.dir * 9.6, y + 5, 1, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
@@ -156,10 +230,26 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
   ctx.save();
   if (now - g.hurtAt < 320) ctx.translate((Math.random() - .5) * 5, (Math.random() - .5) * 5);
   const cam = g.camX;
-  ctx.strokeStyle = "rgba(143,195,255,.07)";
-  ctx.lineWidth = 1;
-  const gridOff = cam % 32;
-  for (let x = -gridOff; x < W; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  const sky = ctx.createLinearGradient(0, 0, 0, GROUND_TOP);
+  sky.addColorStop(0, "#04101f");
+  sky.addColorStop(1, "#0b2547");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, GROUND_TOP + 2);
+  ctx.fillStyle = "rgba(200,220,255,.5)";
+  for (let s = 0; s < 40; s += 1) {
+    const sx = (s * 137.5) % LEVEL_W - cam * .15;
+    const sy = 18 + ((s * 89) % 150);
+    if (sx > -4 && sx < W + 4) ctx.fillRect(sx, sy, 1.4, 1.4);
+  }
+  for (const [cx0, cy] of [[180, 62], [700, 96], [1250, 54], [1800, 88], [2240, 66]] as [number, number][]) {
+    const cxx = cx0 - cam * .3;
+    if (cxx < -80 || cxx > W + 80) continue;
+    ctx.fillStyle = "rgba(143,195,255,.09)";
+    ctx.beginPath();
+    ctx.ellipse(cxx, cy, 34, 9, 0, 0, Math.PI * 2);
+    ctx.ellipse(cxx + 18, cy + 5, 24, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.fillStyle = "#0d2949";
   for (const hill of [140, 620, 1160, 1680, 2160]) {
     const hx = hill - cam * .45;
@@ -174,22 +264,40 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
     if (px + plat.w < -8 || px > W + 8) continue;
     const isGround = plat.h > 20;
     ctx.fillStyle = isGround ? "#0e2a4a" : "#14436f";
-    ctx.fillRect(px, plat.y, plat.w, plat.h);
+    ctx.beginPath();
+    ctx.roundRect(px, plat.y, plat.w, plat.h, isGround ? 4 : 7);
+    ctx.fill();
     ctx.fillStyle = isGround ? "#2a5a8f" : "#3d7ec9";
-    ctx.fillRect(px, plat.y, plat.w, 3);
+    ctx.beginPath();
+    ctx.roundRect(px, plat.y, plat.w, 4, [4, 4, 0, 0]);
+    ctx.fill();
+    if (!isGround) {
+      ctx.fillStyle = "rgba(0,0,0,.25)";
+      ctx.beginPath();
+      ctx.roundRect(px + 3, plat.y + plat.h - 3, plat.w - 6, 3, 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = "rgba(143,195,255,.14)";
+      for (let tx = px + 18; tx < px + plat.w - 10; tx += 46) {
+        ctx.fillRect(tx, plat.y + 10, 8, 2);
+      }
+    }
   }
   for (const chip of g.chips) {
     if (chip.got) continue;
     const cx = chip.x - cam;
     if (cx < -20 || cx > W + 20) continue;
     const hover = Math.sin(now / 300 + chip.x) * 3;
+    ctx.shadowColor = "#5ee8a2";
+    ctx.shadowBlur = 9;
     ctx.fillStyle = "#0d2949";
     ctx.strokeStyle = "#5ee8a2";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.roundRect(cx - 11, chip.y + hover - 9, 22, 18, 4);
+    ctx.roundRect(cx - 11, chip.y + hover - 9, 22, 18, 5);
     ctx.fill();
     ctx.stroke();
+    ctx.shadowBlur = 0;
     ctx.fillStyle = "#5ee8a2";
     ctx.font = "700 6.5px ui-monospace, SFMono-Regular, Menlo, monospace";
     ctx.textAlign = "center";
@@ -203,17 +311,30 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
   }
   const fx = FLAG_X - cam;
   if (fx > -20 && fx < W + 20) {
+    ctx.fillStyle = "#2a5a8f";
+    ctx.beginPath();
+    ctx.ellipse(fx, GROUND_TOP, 16, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.strokeStyle = "#8ea9c1";
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(fx, GROUND_TOP - 108); ctx.lineTo(fx, GROUND_TOP);
     ctx.stroke();
+    ctx.fillStyle = "#ffd166";
+    ctx.beginPath();
+    ctx.arc(fx, GROUND_TOP - 110, 3.4, 0, Math.PI * 2);
+    ctx.fill();
+    const wave = Math.sin(now / 180) * 5;
     ctx.fillStyle = "#0b63ce";
     ctx.beginPath();
     ctx.moveTo(fx, GROUND_TOP - 108);
-    ctx.lineTo(fx + 34, GROUND_TOP - 96);
+    ctx.quadraticCurveTo(fx + 20, GROUND_TOP - 100 + wave, fx + 36 + wave * .6, GROUND_TOP - 96);
     ctx.lineTo(fx, GROUND_TOP - 84);
     ctx.fill();
+    ctx.fillStyle = "#5ee8a2";
+    ctx.font = "700 8px ui-monospace, SFMono-Regular, Menlo, monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("★", fx + 14, GROUND_TOP - 95);
   }
   for (const spark of g.sparks) {
     ctx.globalAlpha = Math.max(spark.life / spark.maxLife, 0);
@@ -224,7 +345,7 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
   const blink = now < g.p.invUntil && Math.floor(now / 80) % 2 === 0;
   if (!blink) {
     const dir = (g.p.vx >= 0 ? 1 : -1) as 1 | -1;
-    drawBear(ctx, g.p.x - cam, g.p.y, dir, now, Math.abs(g.p.vx) > .4 && g.p.grounded);
+    drawBear(ctx, g.p.x - cam, g.p.y, dir, now, Math.abs(g.p.vx) > .4 && g.p.grounded, !g.p.grounded);
   }
   ctx.fillStyle = "#ff6b5a";
   ctx.font = "600 10px ui-monospace, SFMono-Regular, Menlo, monospace";
