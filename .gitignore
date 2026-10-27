@@ -16,3 +16,4 @@
 
 # TypeScript
 *.tsbuildinfo
+.gstack/
