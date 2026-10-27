@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { detectGuideIntent, fallbackGuideAnswer, guideSuggestions, resolveGuideIntent, retrieveGuideEvidence, type GuideIntent, type GuideLocale } from "./logic";
+import { detectGuideIntent, fallbackGuideAnswer, guideSuggestions, isIdentityQuestion, resolveGuideIntent, retrieveGuideEvidence, type GuideIntent, type GuideLocale } from "./logic";
 import { guideCards } from "./presentation";
 import { advanceGuideMemory, detectExplicitTargetRole, resolveTargetRole } from "./memory";
-import { EMPTY_GUIDE_MEMORY, inspectGuideInput, normalizeGuideHistory, normalizeGuideMemory, validateGuideAnswer, type GuideConversationMemory } from "./safety";
+import { EMPTY_GUIDE_MEMORY, inspectGuideInput, normalizeGuideHistory, normalizeGuideMemory, validateGuideAnswer, type GuideConversationMemory, type GuideEvidenceId } from "./safety";
 
 test("routes guide questions deterministically", () => {
   assert.equal(detectGuideIntent("프론트엔드 역량 요약"), "frontend");
@@ -14,6 +14,62 @@ test("routes guide questions deterministically", () => {
   assert.equal(detectGuideIntent("오늘 서울 날씨를 알려줘"), "out_of_scope");
   assert.equal(detectGuideIntent("김도원 말고 오늘 서울 날씨 알려줘"), "out_of_scope");
   assert.equal(detectGuideIntent("파이썬으로 정렬 함수를 만들어줘"), "out_of_scope");
+});
+
+test("greetings get a greeting, not an out-of-scope rejection", () => {
+  for (const question of ["안녕", "안녕하세요", "안녕하세요!", "반갑습니다", "hi", "Hello", "good morning"]) {
+    assert.equal(detectGuideIntent(question), "greeting", question);
+    assert.equal(detectGuideIntent(question, "en"), "greeting", question);
+  }
+
+  const korean = fallbackGuideAnswer("greeting");
+  assert.match(korean, /안녕하세요/);
+  assert.match(korean, /저는/);
+  assert.doesNotMatch(korean, /다루지 않아요/);
+
+  const english = fallbackGuideAnswer("greeting", "en");
+  assert.match(english, /Hello/);
+  assert.doesNotMatch(english, /[가-힣]/);
+
+  assert.ok(guideCards("greeting").length >= 2);
+  assert.ok(guideSuggestions("greeting").length > 0);
+
+  assert.equal(detectGuideIntent("안녕하세요, 대표 프로젝트를 보여줘"), "projects");
+  assert.equal(detectGuideIntent("안녕하세요 오늘 날씨 알려줘"), "out_of_scope");
+  assert.equal(detectGuideIntent("왜 하늘은 파란가요?"), "out_of_scope");
+});
+
+test("who-is-Kim-Dowon questions answer with first-person identification", () => {
+  const koreanQuestions = ["김도원이 누구야", "김도원이 누구야?", "너 누구야", "누구세요?", "당신은 누구입니까", "자기소개 해주세요", "이름이 뭐야", "김도원은 어떤 개발자야"];
+  for (const question of koreanQuestions) {
+    const intent = detectGuideIntent(question);
+    assert.equal(intent, "general", question);
+    const answer = fallbackGuideAnswer(intent, "ko", question);
+    assert.match(answer, /김도원은 바로 저입니다/, question);
+    assert.doesNotMatch(answer, /다루지 않아요/, question);
+  }
+
+  const englishQuestions = ["Who is Kim Dowon?", "who are you", "what's your name", "introduce yourself"];
+  for (const question of englishQuestions) {
+    const intent = detectGuideIntent(question, "en");
+    assert.equal(intent, "general", question);
+    const answer = fallbackGuideAnswer(intent, "en", question);
+    assert.match(answer, /I'm Kim Dowon/, question);
+    assert.doesNotMatch(answer, /[가-힣]/, question);
+  }
+
+  assert.ok(!isIdentityQuestion("김도원 개발자로서 장점은?"));
+  assert.ok(!isIdentityQuestion("프론트엔드 역량 요약"));
+  assert.doesNotMatch(fallbackGuideAnswer("general", "ko", "개발자로서 장점은?"), /김도원은 바로 저입니다/);
+});
+
+test("role-scoped cards never duplicate titles", () => {
+  const hybrid = guideCards("hiring", "ko", "unknown", ["layouteditor", "openstock"]);
+  assert.equal(new Set(hybrid.map((card) => card.title)).size, hybrid.length, "hybrid cards must not repeat titles");
+
+  const allCovered: GuideEvidenceId[] = ["layouteditor", "digital-twin", "translation-agent", "booking-agent", "browser-admin", "openstock", "opendata", "openalarm", "collaboration"];
+  const exhausted = guideCards("hiring", "ko", "unknown", allCovered);
+  assert.equal(new Set(exhausted.map((card) => card.title)).size, exhausted.length, "exhausted cards must not repeat titles");
 });
 
 test("hiring evidence includes product engineering and collaboration", () => {
@@ -41,7 +97,7 @@ test("out-of-scope questions never receive external-domain answers", () => {
 });
 
 test("all fallback answers use first person without third-person naming", () => {
-  const intents: GuideIntent[] = ["career", "frontend", "agent", "openstock", "opendata", "openalarm", "projects", "hiring", "contact", "general", "out_of_scope"];
+  const intents: GuideIntent[] = ["career", "frontend", "agent", "openstock", "opendata", "openalarm", "projects", "hiring", "contact", "general", "greeting", "out_of_scope"];
   for (const intent of intents) {
     const answer = fallbackGuideAnswer(intent);
     assert.match(answer, /저는/);
@@ -149,7 +205,7 @@ test("routes common English portfolio questions by intent", () => {
 });
 
 test("all English fallbacks are first-person and English-only", () => {
-  const intents: GuideIntent[] = ["career", "frontend", "agent", "openstock", "opendata", "openalarm", "projects", "hiring", "contact", "general", "out_of_scope"];
+  const intents: GuideIntent[] = ["career", "frontend", "agent", "openstock", "opendata", "openalarm", "projects", "hiring", "contact", "general", "greeting", "out_of_scope"];
   for (const intent of intents) {
     const answer = fallbackGuideAnswer(intent, "en");
     assert.match(answer, /\bI\b/);

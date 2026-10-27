@@ -74,7 +74,7 @@ function evidenceIdsForTurn(intent: GuideIntent, targetRole: GuideTargetRole): G
   if (intent === "openalarm") return ["openalarm"];
   if (intent === "career") return ["career"];
   if (intent === "projects") return ["openstock", "opendata", "openalarm"];
-  if (intent === "contact" || intent === "out_of_scope") return [];
+  if (intent === "contact" || intent === "out_of_scope" || intent === "greeting") return [];
   if (targetRole === "frontend") return ["layouteditor", "digital-twin", "collaboration"];
   if (targetRole === "agent") return ["translation-agent", "openstock", "collaboration"];
   return ["layouteditor", "openstock", "collaboration"];

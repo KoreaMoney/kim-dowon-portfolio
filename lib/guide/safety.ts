@@ -23,7 +23,7 @@ export const guideEvidenceIds = [
 ] as const;
 export type GuideEvidenceId = (typeof guideEvidenceIds)[number];
 
-const guideIntents = ["career", "frontend", "agent", "openstock", "opendata", "openalarm", "projects", "hiring", "contact", "general", "out_of_scope"] as const;
+const guideIntents = ["career", "frontend", "agent", "openstock", "opendata", "openalarm", "projects", "hiring", "contact", "general", "greeting", "out_of_scope"] as const;
 
 export const guideMemorySchema = z
   .object({

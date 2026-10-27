@@ -310,6 +310,35 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
       evidence: "openstock",
     },
   ],
+  greeting: [
+    {
+      title: { ko: "AI LayoutEditor", en: "AI LayoutEditor" },
+      detail: {
+        ko: "100개 이상 컴포넌트가 있는 편집 화면의 로딩과 메모리를 개선했습니다. 수치는 내부 측정값입니다.",
+        en: "I improved loading and memory in an editing interface with more than 100 components. The figures are internal measurements.",
+      },
+      metric: "45s → 8s · memory −40%",
+      evidence: "layouteditor",
+    },
+    {
+      title: { ko: "10개 언어 번역 Agent", en: "10-language Translation Agent" },
+      detail: {
+        ko: "요청, 언어 분기, 문맥 유지, 결과 반환 흐름을 직접 설계하고 개발했습니다. 처리 시간은 내부 측정값입니다.",
+        en: "I designed and built the request, language routing, context retention, and result delivery flow. The timing is an internal measurement.",
+      },
+      metric: "15s → 7s · 10 languages",
+      evidence: "translation-agent",
+    },
+    {
+      title: { ko: "OpenStockAI", en: "OpenStockAI" },
+      detail: {
+        ko: "전문 역할별 조사와 판단을 routing 계약 테스트로 검증합니다.",
+        en: "I verify role-based research and decisions with routing contract tests.",
+      },
+      metric: "300 queries · 175 tests",
+      evidence: "openstock",
+    },
+  ],
   out_of_scope: [
     {
       title: { ko: "AI Agent 성과", en: "AI Agent result" },
@@ -351,6 +380,17 @@ function freshCards(defs: GuideCardDef[], coveredEvidence: GuideEvidenceId[]): G
   return defs.filter((def) => !def.evidence || !coveredEvidence.includes(def.evidence));
 }
 
+// Localize, drop duplicate titles (shared defs appear in several intents), then cap.
+function presentCards(defs: GuideCardDef[], locale: GuideLocale, limit?: number): GuideCard[] {
+  const seen = new Set<string>();
+  const cards = defs.map((def) => localizeCard(def, locale)).filter((card) => {
+    if (seen.has(card.title)) return false;
+    seen.add(card.title);
+    return true;
+  });
+  return limit === undefined ? cards : cards.slice(0, limit);
+}
+
 export function guideCards(
   intent: GuideIntent,
   locale: GuideLocale = "ko",
@@ -358,18 +398,18 @@ export function guideCards(
   coveredEvidence: GuideEvidenceId[] = [],
 ): GuideCard[] {
   if (intent === "projects") {
-    if (targetRole === "frontend") return cardsByIntent.frontend.slice(0, 2).map((def) => localizeCard(def, locale));
-    if (targetRole === "agent") return cardsByIntent.agent.map((def) => localizeCard(def, locale));
+    if (targetRole === "frontend") return presentCards(cardsByIntent.frontend, locale, 2);
+    if (targetRole === "agent") return presentCards(cardsByIntent.agent, locale);
   }
   if (intent === "hiring" || intent === "general") {
     if (targetRole === "frontend" || targetRole === "agent") {
-      return freshCards(cardsByIntent[targetRole], coveredEvidence).slice(0, 3).map((def) => localizeCard(def, locale));
+      return presentCards(freshCards(cardsByIntent[targetRole], coveredEvidence), locale, 3);
     }
     if (targetRole === "hybrid" || (targetRole === "unknown" && coveredEvidence.length > 0)) {
       const { frontend, agent, projects, hiring } = cardsByIntent;
       const base = [frontend[0], projects[0], projects[1], hiring[2], agent[0], agent[1], frontend[1], agent[4], agent[5]];
-      return freshCards(base, coveredEvidence).slice(0, 3).map((def) => localizeCard(def, locale));
+      return presentCards(freshCards(base, coveredEvidence), locale, 3);
     }
   }
-  return cardsByIntent[intent].map((def) => localizeCard(def, locale));
+  return presentCards(cardsByIntent[intent], locale);
 }

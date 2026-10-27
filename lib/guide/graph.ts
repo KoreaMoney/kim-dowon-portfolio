@@ -8,6 +8,7 @@ import {
   fallbackGuideAnswer,
   guideSuggestions,
   isHiringConcernQuestion,
+  isIdentityQuestion,
   resolveGuideIntent,
   retrieveGuideEvidence,
   type GuideIntent,
@@ -79,8 +80,9 @@ function readTextContent(content: unknown): string {
 
 const answerQuestion: typeof GuideState.Node = async (state, config) => {
   const fallback = fallbackGuideAnswer(state.intent, state.locale, state.question, state.memory);
-  if (state.intent === "out_of_scope") return { answer: fallback, source: "portfolio" };
+  if (state.intent === "out_of_scope" || state.intent === "greeting") return { answer: fallback, source: "portfolio" };
   if (state.intent === "hiring" && isHiringConcernQuestion(state.question)) return { answer: fallback, source: "portfolio" };
+  if ((state.intent === "hiring" || state.intent === "general") && isIdentityQuestion(state.question)) return { answer: fallback, source: "portfolio" };
   if (!process.env.OPENAI_API_KEY) return { answer: fallback, source: "portfolio" };
 
   try {

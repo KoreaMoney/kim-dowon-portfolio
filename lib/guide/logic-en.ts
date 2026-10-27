@@ -1,4 +1,4 @@
-import type { GuideIntent } from "./logic";
+import { greetingPattern, isIdentityQuestion, type GuideIntent } from "./logic";
 import { CONTACT } from "@/lib/contact";
 
 export const englishPortfolioFacts = {
@@ -56,6 +56,7 @@ function includesAny(question: string, keywords: string[]): boolean {
 export function detectEnglishGuideIntent(question: string): GuideIntent {
   const normalized = question.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, " ").trim();
   if (outOfScopePatterns.some((pattern) => pattern.test(normalized))) return "out_of_scope";
+  if (greetingPattern.test(normalized)) return "greeting";
   if (normalized.includes("openstock")) return "openstock";
   if (normalized.includes("opendata")) return "opendata";
   if (normalized.includes("openalarm")) return "openalarm";
@@ -68,7 +69,7 @@ export function detectEnglishGuideIntent(question: string): GuideIntent {
   if (includesAny(normalized, ["project", "portfolio", "builds", "case study", "openstock", "openalarm", "opendata", "sweet-diagram", "sweet diagram", "what did you build", "what have you built", "프로젝트", "포트폴리오", "성과", "숫자"])) return "projects";
   if (includesAny(normalized, ["career", "work history", "employment", "companies", "company", "years of experience", "current role", "previous role", "where did you work", "where have you worked", "experience", "경력", "회사", "이력", "몇 년"])) return "career";
   if (includesAny(normalized, ["strength", "strong point", "fit for", "value to", "work with you", "problem solving", "collaboration", "communication", "협업"])) return "hiring";
-  if (includesAny(normalized, ["kim dowon", "dowon kim", "developer", "introduce yourself", "about you", "who are you", "skills", "work style", "product", "user value", "what do you do", "김도원", "개발자", "소개", "역량", "경험", "업무", "제품", "사용자", "가치"])) return "general";
+  if (includesAny(normalized, ["kim dowon", "dowon kim", "developer", "introduce yourself", "about you", "who are you", "skills", "work style", "product", "user value", "what do you do", "김도원", "개발자", "소개", "역량", "경험", "업무", "제품", "사용자", "가치"]) || isIdentityQuestion(normalized)) return "general";
   return "out_of_scope";
 }
 
@@ -84,6 +85,7 @@ export function fallbackEnglishGuideAnswer(intent: GuideIntent, question = ""): 
   if (intent === "projects") return "I documented 19 builds across Frontend, AI Agents, and 3D products. OpenStockAI uses 300 representative queries and 175 routing contract tests. Would you like me to choose the project closest to your role?";
   if (intent === "career") return "I currently work as AI Agent Pro · Frontend at WiseAI while also serving as Founder · AI Product Engineer at OpenDoorLabs. I started with QA field tools and expanded into 3D frontend and AI product development. Would you like my current scope or results from a previous company first?";
   if (intent === "contact") return "I can be reached by email or phone. You can also review my public work through my GitHub and LinkedIn profiles.";
+  if (intent === "greeting") return "Hello! I'm Kim Dowon, and I build products that connect Frontend and AI Agents. Ask me about my hiring strengths, representative projects, or how I work with teams.";
   if (intent === "out_of_scope") return "That topic sits outside this guide. I can share verified evidence from my Frontend and AI Agent work. Would my hiring strengths or a representative project help you more?";
   return "I build and improve both Frontend products and AI Agents. I make choices and state clear in the interface, then connect Agent lookup and validation to the user's completed task. Would product results or my working style help you more?";
 }

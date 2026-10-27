@@ -6,7 +6,7 @@ import {
 import type { GuideConversationMemory, GuideEvidenceId, GuideHistoryMessage, GuideTargetRole } from "./safety";
 import { CONTACT } from "@/lib/contact";
 
-export type GuideIntent = "career" | "frontend" | "agent" | "openstock" | "opendata" | "openalarm" | "projects" | "hiring" | "contact" | "general" | "out_of_scope";
+export type GuideIntent = "career" | "frontend" | "agent" | "openstock" | "opendata" | "openalarm" | "projects" | "hiring" | "contact" | "general" | "greeting" | "out_of_scope";
 export type GuideLocale = "ko" | "en";
 
 export const portfolioFacts = {
@@ -70,10 +70,13 @@ const outOfScopePatterns = [
   /(?:만들어|작성해|구현해|짜줘|고쳐|풀어).*(?:함수|코드|프로그램|앱)/,
 ];
 
+export const greetingPattern = /^(?:안녕(?:하세요|하십니까|히\s*가(?:세요|주세요)?)?|하이|헬로|반갑(?:습니다|워(?:요)?|네요|다)?|좋은\s*(?:아침|오후|저녁|하루)(?:이에요|예요|입니다)?|처음\s*뵙겠습니다|hi|hello|hey|yo|hiya|howdy|good\s*(?:morning|afternoon|evening|day|night)|greetings|nice\s*to\s*meet\s*you)(?:\s+there)?[\s!?.~…,]*$/i;
+
 export function detectGuideIntent(question: string, locale: GuideLocale = "ko"): GuideIntent {
   if (locale === "en") return detectEnglishGuideIntent(question);
   const normalized = question.toLowerCase();
   if (outOfScopePatterns.some((pattern) => pattern.test(normalized))) return "out_of_scope";
+  if (greetingPattern.test(normalized.trim())) return "greeting";
   if (normalized.includes("openstock")) return "openstock";
   if (normalized.includes("opendata")) return "opendata";
   if (normalized.includes("openalarm")) return "openalarm";
@@ -82,7 +85,7 @@ export function detectGuideIntent(question: string, locale: GuideLocale = "ko"):
   if (/(?:왜.*채용|채용.*왜)/.test(normalized)) return "hiring";
   const matched = keywordGroups.find(([, keywords]) => keywords.some((keyword) => normalized.includes(keyword)))?.[0];
   if (matched) return matched;
-  return generalScopeKeywords.some((keyword) => normalized.includes(keyword)) ? "general" : "out_of_scope";
+  return generalScopeKeywords.some((keyword) => normalized.includes(keyword)) || isIdentityQuestion(normalized) ? "general" : "out_of_scope";
 }
 
 const followUpPatterns = [
@@ -137,7 +140,7 @@ function retrieveEvidenceForFacts(intent: GuideIntent, targetRole: GuideTargetRo
   if (intent === "openalarm") return [facts.projects[3]];
   if (intent === "career") return [...facts.career, facts.projects[0]];
   if (intent === "contact") return [...facts.contact];
-  if (intent === "out_of_scope") return [];
+  if (intent === "greeting" || intent === "out_of_scope") return [];
   return [facts.career[0], facts.frontend[0], facts.agent[0], facts.projects[0], facts.collaboration[2]];
 }
 
@@ -186,6 +189,10 @@ const suggestionsByIntent: Record<GuideIntent, Record<GuideLocale, string[]>> = 
     ko: ["김도원의 강점은 무엇인가요?", "대표 프로젝트를 알려주세요", "AI Agent 경험을 알려주세요"],
     en: ["Why should we hire you?", "What are your representative projects?", "Tell me about your AI Agent experience"],
   },
+  greeting: {
+    ko: ["김도원의 강점은 무엇인가요?", "대표 프로젝트를 알려주세요", "AI Agent 경험을 알려주세요"],
+    en: ["What are your strengths?", "Tell me about your representative projects", "Tell me about your AI Agent experience"],
+  },
   out_of_scope: {
     ko: ["채용하면 좋은 점은?", "프론트엔드 역량 요약", "대표 프로젝트 추천"],
     en: ["Why should we hire you?", "Summarize your frontend strengths", "Recommend a representative project"],
@@ -206,6 +213,10 @@ export function guideSuggestions(intent: GuideIntent, locale: GuideLocale = "ko"
 
 export function isHiringConcernQuestion(question: string): boolean {
   return /약점|단점|부족|우려|리스크|보완|채용하지|weakness|shortcoming|gap|concern|risk|downside|limitation|shouldn['’]t hire/i.test(question);
+}
+
+export function isIdentityQuestion(question: string): boolean {
+  return /김도원.{0,12}(?:누구|소개|어떤\s*(?:사람|개발자|분))|(?:너는?|당신|본인|자기).{0,12}누구|자기\s*소개|본인\s*소개|^소개(?:를|해|좀|부탁)|누구(?:야|세요|시죠|니|냐|지|입니까|인가요|이세요|에요|예요)?\s*[?？!。.~]*$|이름이?\s*(?:뭐|무엇|어떻게)|who\s+are\s+you|who\s+is\s+(?:kim\s+)?dowon|who\s+am\s+i\s+talking|introduce\s+yourself|tell\s+me\s+about\s+yourself|what.{0,5}your\s+name|your\s+name/i.test(question);
 }
 
 type EvidenceStep = { anyOf: GuideEvidenceId[] } & Record<GuideLocale, string>;
@@ -311,6 +322,7 @@ export function fallbackGuideAnswer(
   const targetRole = memory?.targetRole ?? "unknown";
   const covered = new Set(memory?.coveredEvidence ?? []);
   const askRole = targetRole === "unknown" && !memory?.roleAsked && (intent === "hiring" || intent === "general");
+  const roleQuestion = locale === "en" ? "Is this closer to a Frontend, AI Agent, or hybrid role?" : "프론트엔드, AI Agent, 두 영역을 함께 보는 포지션 중 어디에 가깝나요?";
   if (intent === "projects") {
     if (targetRole === "frontend") return locale === "en" ? "I count AI LayoutEditor and a 3D digital twin among my representative Frontend projects. I reduced LayoutEditor loading from 45 seconds to 8 seconds in internal measurements, and reduced the 3D product's loading from 35 seconds to 15 seconds." : "저는 AI LayoutEditor와 3D 디지털 트윈을 대표 프론트엔드 프로젝트로 꼽습니다. LayoutEditor 로딩은 내부 측정 45초에서 8초로, 3D 제품 로딩은 35초에서 15초로 줄였습니다.";
     if (targetRole === "agent") return locale === "en" ? "I count the 10-language Translation Agent, Hospital Consultation and Booking Agent, OpenStockAI, OpenDataLabs, and OpenAlarm among my representative AI Agent projects. The documented work spans product flows, routing contract tests, research-to-requirement conversion, and three-stage notifications." : "저는 10개 언어 번역 Agent, 병원 상담예약 Agent, OpenStockAI, OpenDataLabs, OpenAlarm을 대표 AI Agent 프로젝트로 꼽습니다. 제품 흐름 구축, routing 계약 테스트, 논문 기반 요구사항 변환, 3단계 알림 구현을 각각 확인할 수 있습니다.";
@@ -320,10 +332,18 @@ export function fallbackGuideAnswer(
     if (locale === "en") return fallbackEnglishGuideAnswer(intent, question);
     return "저는 확인된 자료만으로 개인적 약점을 꾸며 답하지 않겠습니다. 제 이력은 Frontend와 AI Agent를 연결한 제품 개발에 근거가 있고, 지원 역할의 기대와 맞지 않는 지점은 면접에서 사례로 확인해야 합니다. 역할의 핵심 기대를 알려주시면 관련 경험과 확인이 필요한 부분을 나눠 답하겠습니다.";
   }
+  if ((intent === "hiring" || intent === "general") && isIdentityQuestion(question)) {
+    const base = locale === "en"
+      ? "I'm Kim Dowon. I build and improve Frontend products and AI Agents with React, Next.js, and TypeScript across 5 years of experience."
+      : "김도원은 바로 저입니다. 저는 React, Next.js, TypeScript 기반 프론트엔드와 AI Agent를 직접 구축하고 개선하는 5년 경력 개발자입니다.";
+    const nextStep = locale === "en"
+      ? "Would you like my career history, representative projects, or hiring strengths first?"
+      : "경력, 대표 프로젝트, 채용 강점 중 무엇부터 보실까요?";
+    return `${base} ${askRole ? roleQuestion : nextStep}`;
+  }
   if (intent === "hiring" || intent === "general") {
     const stepSet = hiringStepSets[targetRole === "frontend" || targetRole === "agent" ? targetRole : "general"];
     const answer = (stepSet.steps.find((step) => step.anyOf.some((id) => !covered.has(id))) ?? stepSet.wrapUp)[locale];
-    const roleQuestion = locale === "en" ? "Is this closer to a Frontend, AI Agent, or hybrid role?" : "프론트엔드, AI Agent, 두 영역을 함께 보는 포지션 중 어디에 가깝나요?";
     return askRole ? `${answer} ${roleQuestion}` : answer;
   }
   if (locale === "en") return fallbackEnglishGuideAnswer(intent, question);
@@ -335,6 +355,7 @@ export function fallbackGuideAnswer(
   if (intent === "openalarm") return "저는 OpenAlarm에 기상, 준비, 출발을 잇는 3단계 알림과 AI 일기 회고를 구현했습니다. 구체적인 Agent 구조와 사용 기술은 이 포트폴리오에 기록하지 않았습니다.";
   if (intent === "career") return "저는 현재 WiseAI의 AI Agent Pro · Frontend와 OpenDoorLabs의 Founder · AI Product Engineer 역할을 함께 맡고 있습니다. QA 현장 도구에서 시작해 3D 프론트엔드와 AI 제품 개발로 범위를 넓혔습니다. 현재 역할과 이전 회사 성과 중 어디부터 보시겠어요?";
   if (intent === "contact") return "저는 이메일과 전화로 연락을 받습니다. 저의 GitHub과 LinkedIn에서도 작업 기록을 확인할 수 있습니다.";
+  if (intent === "greeting") return "안녕하세요! 저는 Frontend와 AI Agent를 연결한 제품을 만드는 김도원입니다. 채용 강점, 대표 프로젝트, 협업 방식 중 궁금한 것부터 물어봐 주세요.";
   if (intent === "out_of_scope") return "그 주제는 이 안내에서 다루지 않아요. 저는 Frontend와 AI Agent를 연결한 제품 경험을 검증된 근거로 설명드릴 수 있습니다. 채용 강점과 대표 프로젝트 중 무엇을 살펴보실까요?";
   return "저는 Frontend와 AI Agent를 직접 구축하고 개선합니다. 화면의 선택과 상태를 명확히 하고, Agent의 조회와 검증을 사용자의 업무 완료까지 연결합니다. 제품 성과와 일하는 방식 중 무엇이 궁금하신가요?";
 }
