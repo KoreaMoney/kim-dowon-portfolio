@@ -37,6 +37,8 @@ type RunState = {
   keys: Set<string>;
   sparks: Spark[];
   lastBurst: number;
+  plane: { x: number; active: boolean };
+  planesSeen: number;
 };
 
 const platforms: Plat[] = [
@@ -82,6 +84,8 @@ function freshRun(): RunState {
     keys: new Set(),
     sparks: [],
     lastBurst: 0,
+    plane: { x: 0, active: false },
+    planesSeen: 0,
   };
 }
 
@@ -375,6 +379,63 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
     ctx.font = "600 10px ui-monospace, SFMono-Regular, Menlo, monospace";
     ctx.fillText(en ? "find who planted the flag" : "플래그를 꽂은 주인을 찾아보세요", W / 2, H - 16);
   }
+  if (g.plane.active) {
+    const px = g.plane.x - cam;
+    const py = 62 + Math.sin(now / 260) * 4;
+    const bannerText = en ? "Product · Business · Communication — Kim Dowon, recommended." : "제품을 생각하고 기업을 생각하고 의사소통이 뛰어난 김도원 추천합니다";
+    ctx.font = "700 9px ui-monospace, SFMono-Regular, Menlo, monospace";
+    const textW = ctx.measureText(bannerText).width;
+    const bw = textW + 20;
+    const bh = 20;
+    const bx = px - 26 - bw;
+    const by = py - bh / 2 + Math.sin(now / 180 + px * .02) * 2;
+    ctx.strokeStyle = "#8ea9c1";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(px - 12, py);
+    ctx.lineTo(bx + bw, by + bh / 2);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(234,244,255,.95)";
+    ctx.strokeStyle = "#2a5a8f";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bw, bh, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#071b32";
+    ctx.textAlign = "center";
+    ctx.fillText(bannerText, bx + bw / 2, by + bh / 2 + 3.5);
+    ctx.fillStyle = "#eaf4ff";
+    ctx.strokeStyle = "#0a2240";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(px - 13, py - 4, 26, 8, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#b0524a";
+    ctx.beginPath();
+    ctx.moveTo(px - 2, py - 4);
+    ctx.lineTo(px + 4, py - 12);
+    ctx.lineTo(px + 9, py - 12);
+    ctx.lineTo(px + 6, py - 4);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(px - 13, py - 2);
+    ctx.lineTo(px - 18, py - 7);
+    ctx.lineTo(px - 15, py + 1);
+    ctx.fill();
+    ctx.fillStyle = "#4aa3ff";
+    ctx.beginPath();
+    ctx.arc(px + 7, py - 1, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#eaf4ff";
+    ctx.lineWidth = 1.2;
+    const propA = now / 30;
+    ctx.beginPath();
+    ctx.moveTo(px + 14, py + Math.sin(propA) * 6);
+    ctx.lineTo(px + 14, py - Math.sin(propA) * 6);
+    ctx.stroke();
+  }
   ctx.restore();
 }
 
@@ -497,6 +558,11 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
           if (overlaps(p.x - PW / 2 - 4, p.y - 4, PW + 8, PH + 8, chip.x - 12, chip.y - 10, 24, 20)) {
             chip.got = true;
             burst(chip.x, chip.y, g.sparks, 10, "#5ee8a2");
+            const got = g.chips.filter((c) => c.got).length;
+            if (got % 4 === 0 && got > g.planesSeen * 4 && !g.plane.active) {
+              g.planesSeen = got / 4;
+              g.plane = { x: g.camX - 420, active: true };
+            }
           }
         }
         for (const bug of g.bugs) {
@@ -535,6 +601,10 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
             g.hurtAt = now;
             burst(p.x, p.y + 20, g.sparks, 10, "#8fc3ff");
           }
+        }
+        if (g.plane.active) {
+          g.plane.x += 3;
+          if (g.plane.x > g.camX + W + 480) g.plane.active = false;
         }
         if (p.x >= FLAG_X) setPhase("won");
       }
