@@ -937,3 +937,12 @@ html[lang="en"] .career-metric-value > span { min-width:0; overflow-wrap:anywher
   .bb-overlay { padding:14px; }
   .bb-overlay h2 { font-size:26px; }
 }
+
+/* Stickman bout controls */
+.sf-controls { display:grid; grid-template-columns:1fr 1fr 1.4fr 1.4fr; gap:8px; }
+.sf-controls button { display:grid; min-height:52px; place-items:center; border:1px solid #315372; background:#0d2949; color:#c8ddef; font:700 13px ui-monospace,SFMono-Regular,Menlo,monospace; cursor:pointer; touch-action:none; user-select:none; }
+.sf-controls button:active { background:var(--cobalt); color:white; }
+.sf-controls .sf-attack { border-color:var(--cobalt); color:#8fc3ff; letter-spacing:.08em; }
+@media (min-width:681px) {
+  .sf-controls { max-width:640px; margin:auto; }
+}

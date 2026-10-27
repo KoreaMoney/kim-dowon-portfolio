@@ -225,7 +225,7 @@ function ContactSecret() {
 
 function WorldCupTeaser() {
   const { t } = useLocale();
-  return <section className="content-section wc-teaser-section" aria-label={t("푸른곰 아케이드")}><Link className="wc-teaser" href="/play"><span>INTERMISSION / MINI GAMES</span><b>{t("잠깐 — 푸른곰 아케이드에서 쉬어가세요.")}</b><small>{t("이상형 월드컵과 벽돌깨기. 클리어하면 중요한 진실을 알게 됩니다.")}</small><GameControllerIcon size={22} /></Link></section>;
+  return <section className="content-section wc-teaser-section" aria-label={t("푸른곰 아케이드")}><Link className="wc-teaser" href="/play"><span>INTERMISSION / MINI GAMES</span><b>{t("잠깐 — 푸른곰 아케이드에서 쉬어가세요.")}</b><small>{t("이상형 월드컵, 벽돌깨기, 졸라맨 대전. 클리어하면 중요한 진실을 알게 됩니다.")}</small><GameControllerIcon size={22} /></Link></section>;
 }
 
 function HireActivity() {
