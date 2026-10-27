@@ -16,7 +16,7 @@ const JUMP_V = -13;
 const GRAVITY = .7;
 const PW = 20;
 const PH = 34;
-const MAX_LEVEL = 3;
+const MAX_LEVEL = 10;
 const SPARK_COLORS = ["#8fc3ff", "#5ee8a2", "#ffffff", "#4aa3ff", "#ffd166"];
 const CHIP_LABELS = ["PERF", "UI", "DX", "TEST", "AGENT", "SSR", "A11Y", "CACHE", "API", "STATE", "EDGE", "AI", "CI", "LCP", "TDD", "REALTIME", "i18n", "SEO"];
 
@@ -27,6 +27,34 @@ type Spark = { x: number; y: number; vx: number; vy: number; life: number; maxLi
 type Runner = { x: number; y: number; vx: number; vy: number; grounded: boolean; hearts: number; invUntil: number };
 type BannerRect = { x: number; y: number; w: number; h: number; url: string };
 type Difficulty = "easy" | "normal" | "hard";
+type Weather = "clear" | "dawn" | "fog" | "rain" | "snow" | "leaves" | "storm" | "aurora" | "wind" | "finale";
+
+const levelWeather: Weather[] = ["clear", "dawn", "fog", "rain", "snow", "leaves", "storm", "aurora", "wind", "finale"];
+const weatherNames: Record<Weather, { ko: string; en: string }> = {
+  clear: { ko: "맑은 밤", en: "Clear Night" },
+  dawn: { ko: "새벽", en: "Dawn" },
+  fog: { ko: "안개", en: "Fog" },
+  rain: { ko: "비", en: "Rain" },
+  snow: { ko: "눈", en: "Snow" },
+  leaves: { ko: "낙엽 바람", en: "Falling Leaves" },
+  storm: { ko: "폭풍", en: "Storm" },
+  aurora: { ko: "오로라", en: "Aurora" },
+  wind: { ko: "강풍", en: "Strong Wind" },
+  finale: { ko: "황금 노을", en: "Golden Finale" },
+};
+const skies: Record<Weather, [string, string]> = {
+  clear: ["#04101f", "#0b2547"],
+  dawn: ["#2a1840", "#c96f45"],
+  fog: ["#16283f", "#3d567a"],
+  rain: ["#081222", "#14294e"],
+  snow: ["#16324f", "#4d6f99"],
+  leaves: ["#221833", "#7a4a2e"],
+  storm: ["#050a16", "#0d1e38"],
+  aurora: ["#020d1e", "#0b2547"],
+  wind: ["#04101f", "#0b2547"],
+  finale: ["#1a1033", "#e8a05a"],
+};
+const starry: ReadonlySet<Weather> = new Set(["clear", "aurora", "wind", "finale"]);
 
 type RunState = {
   p: Runner;
@@ -67,13 +95,13 @@ const bannerDefs = [
 ] as const;
 
 function buildLevel(level: number, diff: Difficulty) {
-  const levelW = 2300 + (level - 1) * 420;
+  const levelW = 2300 + (level - 1) * 560;
   const flagX = levelW - 70;
   const plats: Plat[] = [];
   const chips: Chip[] = [];
   const bugs: Bug[] = [];
-  const gapW = (i: number) => 60 + ((i * 31 + level * 23) % 52) + level * 6;
-  const segW = (i: number) => 320 + ((i * 47 + level * 19) % 130);
+  const gapW = (i: number) => Math.min(60 + ((i * 31 + level * 23) % 52) + level * 6, 138);
+  const segW = (i: number) => 320 + ((i * 47 + level * 19) % 130) + (level >= 7 ? 30 : 0);
   const segs: Plat[] = [];
   let x = 0;
   let i = 0;
@@ -90,12 +118,12 @@ function buildLevel(level: number, diff: Difficulty) {
   let li = 0;
   for (const [si, seg] of segs.entries()) {
     if (si > 0 && seg.w > 200) {
-      const count = Math.max(1, (seg.w > 340 && level >= 2 ? 2 : 1) + (seg.w > 300 ? runDiffs[diff].extra : 0));
+      const count = Math.max(1, (seg.w > 340 && level >= 2 ? 2 : 1) + (seg.w > 360 && level >= 6 ? 1 : 0) + (seg.w > 300 ? runDiffs[diff].extra : 0));
       for (let b = 0; b < count; b += 1) {
         const minX = seg.x + 26 + b * 70;
         const maxX = Math.min(seg.x + seg.w - 26, minX + 150 + level * 20);
         if (maxX - minX < 60) continue;
-        bugs.push({ x: minX + 40, minX, maxX, spd: (1.2 + level * .28) * runDiffs[diff].spd, dir: b % 2 === 0 ? 1 : -1, kind: Math.min(level - 1, 2), dead: false, deadAt: 0 });
+        bugs.push({ x: minX + 40, minX, maxX, spd: (1.2 + level * .22) * runDiffs[diff].spd, dir: b % 2 === 0 ? 1 : -1, kind: (level - 1) % 3, dead: false, deadAt: 0 });
       }
     }
     if (seg.w < 170) continue;
@@ -346,22 +374,119 @@ function drawBug(ctx: CanvasRenderingContext2D, b: Bug, now: number) {
   ctx.globalAlpha = 1;
 }
 
+function drawWeather(ctx: CanvasRenderingContext2D, weather: Weather, now: number) {
+  if (weather === "rain" || weather === "storm") {
+    const drops = weather === "storm" ? 90 : 55;
+    ctx.strokeStyle = "rgba(140,190,255,.45)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < drops; i += 1) {
+      const x = ((i * 97 + Math.floor(now / 16) * 13) % (W + 30)) - 15;
+      const y = ((i * 61 + now * (.5 + (i % 3) * .12)) % (H + 20)) - 10;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 3, y + 9);
+      ctx.stroke();
+    }
+    if (weather === "storm" && Math.floor(now / 2600) % 2 === 0 && (now % 2600) < 90) {
+      ctx.fillStyle = `rgba(230,240,255,${.22 * (1 - (now % 2600) / 90)})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+  } else if (weather === "snow") {
+    ctx.fillStyle = "rgba(235,245,255,.8)";
+    for (let i = 0; i < 60; i += 1) {
+      const x = ((i * 89 + Math.sin(now / 900 + i * 1.7) * 18 + W * 3) % (W + 20)) - 10;
+      const y = ((i * 53 + now * (.07 + (i % 3) * .03)) % (GROUND_TOP + 20)) - 10;
+      ctx.beginPath();
+      ctx.arc(x, y, 1.2 + (i % 3) * .5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (weather === "leaves") {
+    for (let i = 0; i < 26; i += 1) {
+      const drift = now * (.12 + (i % 4) * .05);
+      const x = ((i * 113 + drift) % (W + 40)) - 20;
+      const y = 30 + ((i * 71 + Math.sin(now / 500 + i) * 40 + now * .04) % (GROUND_TOP - 40));
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(now / 300 + i);
+      ctx.fillStyle = i % 3 === 0 ? "rgba(217,132,60,.75)" : "rgba(170,105,45,.65)";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 3.4, 1.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  } else if (weather === "fog") {
+    for (let i = 0; i < 5; i += 1) {
+      const x = ((i * 260 + now * .08) % (W + 320)) - 160;
+      const y = 60 + i * 56;
+      ctx.fillStyle = "rgba(190,215,240,.10)";
+      ctx.beginPath();
+      ctx.ellipse(x, y, 170, 22 + (i % 2) * 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (weather === "aurora") {
+    for (let band = 0; band < 3; band += 1) {
+      const baseY = 60 + band * 40;
+      ctx.strokeStyle = band === 1 ? "rgba(120,230,170,.30)" : band === 2 ? "rgba(150,120,255,.22)" : "rgba(94,232,162,.28)";
+      ctx.lineWidth = 16 - band * 4;
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 20) {
+        const y = baseY + Math.sin(x / 90 + now / 1100 + band * 1.8) * 14;
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  } else if (weather === "wind") {
+    ctx.strokeStyle = "rgba(160,210,255,.3)";
+    ctx.lineWidth = 1.2;
+    for (let i = 0; i < 24; i += 1) {
+      const x = ((i * 167 + now * (.9 + (i % 3) * .3)) % (W + 80)) - 40;
+      const y = 20 + ((i * 97) % (GROUND_TOP - 30));
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + 24 + (i % 4) * 8, y - 2);
+      ctx.stroke();
+    }
+  } else if (weather === "finale") {
+    ctx.fillStyle = "rgba(255,220,140,.7)";
+    for (let i = 0; i < 30; i += 1) {
+      const x = ((i * 137 + Math.sin(now / 800 + i * 2.3) * 24 + W * 3) % (W + 20)) - 10;
+      const y = GROUND_TOP - ((i * 61 + now * (.08 + (i % 3) * .04)) % GROUND_TOP);
+      ctx.globalAlpha = .3 + Math.abs(Math.sin(now / 600 + i)) * .5;
+      ctx.beginPath();
+      ctx.arc(x, y, 1.3 + (i % 3) * .4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
 function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: boolean, phase: string) {
+  const weather = levelWeather[Math.min(g.level - 1, levelWeather.length - 1)];
   ctx.fillStyle = "#071b32";
   ctx.fillRect(0, 0, W, H);
   ctx.save();
   if (now - g.hurtAt < 320) ctx.translate((Math.random() - .5) * 5, (Math.random() - .5) * 5);
   const cam = g.camX;
+  const [skyTop, skyBottom] = skies[weather];
   const sky = ctx.createLinearGradient(0, 0, 0, GROUND_TOP);
-  sky.addColorStop(0, "#04101f");
-  sky.addColorStop(1, "#0b2547");
+  sky.addColorStop(0, skyTop);
+  sky.addColorStop(1, skyBottom);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, W, GROUND_TOP + 2);
-  ctx.fillStyle = "rgba(200,220,255,.5)";
-  for (let s = 0; s < 40; s += 1) {
-    const sx = (s * 137.5) % g.levelW - cam * .15;
-    const sy = 18 + ((s * 89) % 150);
-    if (sx > -4 && sx < W + 4) ctx.fillRect(sx, sy, 1.4, 1.4);
+  if (starry.has(weather)) {
+    ctx.fillStyle = "rgba(200,220,255,.5)";
+    for (let s = 0; s < 40; s += 1) {
+      const sx = (s * 137.5) % g.levelW - cam * .15;
+      const sy = 18 + ((s * 89) % 150);
+      if (sx > -4 && sx < W + 4) ctx.fillRect(sx, sy, 1.4, 1.4);
+    }
+  }
+  if (weather === "dawn" || weather === "finale") {
+    const sunX = W / 2 - cam * .05;
+    ctx.fillStyle = weather === "finale" ? "rgba(255,200,110,.85)" : "rgba(255,170,110,.7)";
+    ctx.beginPath();
+    ctx.arc(sunX, 92, weather === "finale" ? 26 : 20, 0, Math.PI * 2);
+    ctx.fill();
   }
   for (const [cx0, cy] of [[180, 62], [700, 96], [1250, 54], [1800, 88], [2240, 66], [2700, 74], [3100, 60]] as [number, number][]) {
     const cxx = cx0 - cam * .3;
@@ -487,7 +612,8 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
   }
   ctx.textAlign = "right";
   ctx.fillStyle = "#8ea9c1";
-  ctx.fillText(`LV ${g.level}/${MAX_LEVEL} · MAP ${Math.min(Math.round(g.p.x / g.flagX * 100), 100)}%`, W - 16, 24);
+  const wName = en ? weatherNames[weather].en : weatherNames[weather].ko;
+  ctx.fillText(`LV ${g.level}/${MAX_LEVEL} · ${wName.toUpperCase()} · MAP ${Math.min(Math.round(g.p.x / g.flagX * 100), 100)}%`, W - 16, 24);
   ctx.textAlign = "center";
   if (phase === "ready") {
     ctx.fillStyle = "#8ea9c1";
@@ -555,6 +681,7 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
   } else {
     g.bannerRect = null;
   }
+  drawWeather(ctx, weather, now);
   ctx.restore();
 }
 
@@ -819,7 +946,7 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
         ? (en ? `Level ${level} clear! One heart recharged. The next map is longer and buggier.` : `레벨 ${level} 클리어! 하트가 하나 충전됩니다. 다음 맵은 더 길고 버그도 많아요.`)
       : phase === "run"
         ? (en ? `Level ${level}/${MAX_LEVEL}. Move: arrows·A/D. Jump: ↑·W·Space. Stomp bugs, grab chips, tap the banner plane for links.` : `레벨 ${level}/${MAX_LEVEL}. 이동: 방향키·A/D. 점프: ↑·W·스페이스. 버그를 밟고 칩을 모으세요. 배너 비행기를 누르면 링크로 이동합니다.`)
-        : (en ? `${MAX_LEVEL} levels of side-scrolling. 3 hearts, skill chips, promo planes — and a flag at the end.` : `횡스크롤 ${MAX_LEVEL}레벨. 하트 3개, 스킬 칩, 홍보 비행기 — 그리고 끝의 플래그.`);
+        : (en ? `${MAX_LEVEL} levels of side-scrolling — changing weather, skill chips, promo planes, and a flag at the end.` : `횡스크롤 ${MAX_LEVEL}레벨. 레벨마다 날씨가 바뀌고, 스킬 칩, 홍보 비행기 — 그리고 끝의 플래그.`);
 
   return (
     <main id="main" className="wc-page">
