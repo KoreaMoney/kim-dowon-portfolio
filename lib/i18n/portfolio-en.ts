@@ -222,5 +222,5 @@ export const portfolioEnglish: Record<string, string> = {
   "협업 이야기하기": "Discuss a collaboration",
   "푸른곰 아케이드": "BlueBear Arcade",
   "잠깐 — 푸른곰 아케이드에서 쉬어가세요.": "A moment — take a break at the BlueBear Arcade.",
-  "이상형 월드컵, 벽돌깨기, 졸라맨 대전. 클리어하면 중요한 진실을 알게 됩니다.": "The Ideal Type World Cup, a brick breaker, and a stickman bout. Clear them to learn an important truth.",
+  "미니게임 4종 — 월드컵, 벽돌깨기, 졸라맨 대전, 베어 런. 클리어하면 중요한 진실을 알게 됩니다.": "Four mini games — world cup, brick breaker, stickman bout, and bear run. Clear them to learn an important truth.",
 };

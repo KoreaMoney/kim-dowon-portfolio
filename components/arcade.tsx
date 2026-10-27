@@ -1,14 +1,15 @@
 "use client";
 
-import { BoxingGloveIcon, SquaresFourIcon, TrophyIcon } from "@phosphor-icons/react";
+import { BoxingGloveIcon, PersonSimpleRunIcon, SquaresFourIcon, TrophyIcon } from "@phosphor-icons/react";
 import { useState } from "react";
+import { BearRun } from "@/components/bearrun";
 import { BlueBear } from "@/components/bluebear";
 import { BrickBreaker } from "@/components/brickbreaker";
 import { useLocale } from "@/components/locale-provider";
 import { StickFight } from "@/components/stickfight";
 import { WorldCup } from "@/components/worldcup";
 
-type GameId = "worldcup" | "bricks" | "fight";
+type GameId = "worldcup" | "bricks" | "fight" | "run";
 
 export function Arcade() {
   const { locale } = useLocale();
@@ -24,6 +25,7 @@ function LocalizedArcade() {
   if (game === "worldcup") return <WorldCup onExit={back} />;
   if (game === "bricks") return <BrickBreaker onExit={back} />;
   if (game === "fight") return <StickFight onExit={back} />;
+  if (game === "run") return <BearRun onExit={back} />;
 
   const games: { id: GameId; icon: typeof TrophyIcon; name: string; desc: string; note: string }[] = [
     {
@@ -53,6 +55,15 @@ function LocalizedArcade() {
         : "3라운드 졸라맨 토너먼트. 상대를 모두 쓰러뜨리면 그들의 진짜 정체가 밝혀집니다.",
       note: en ? "3 rounds · punch & kick" : "3라운드 · 펀치와 킥",
     },
+    {
+      id: "run",
+      icon: PersonSimpleRunIcon,
+      name: en ? "Bear Run" : "베어 런",
+      desc: en
+        ? "A side-scrolling platformer. Stomp bugs, collect 12 skill chips, and reach the flag."
+        : "횡스크롤 플랫폼 게임. 버그를 밟고, 스킬 칩 12개를 모아 플래그까지 달리세요.",
+      note: en ? "3 hearts · 12 chips" : "하트 3개 · 칩 12개",
+    },
   ];
 
   return (
@@ -62,8 +73,8 @@ function LocalizedArcade() {
         <span className="wc-kicker">BLUEBEAR ARCADE</span>
         <h1>{en ? "BlueBear Arcade" : "푸른곰 아케이드"}</h1>
         <p>{en
-          ? "Three mini games hosted by BlueBear. Win, and you will learn an important truth."
-          : "푸른곰이 준비한 미니게임 3종입니다. 클리어하면 중요한 진실을 알게 됩니다."}</p>
+          ? "Four mini games hosted by BlueBear. Win, and you will learn an important truth."
+          : "푸른곰이 준비한 미니게임 4종입니다. 클리어하면 중요한 진실을 알게 됩니다."}</p>
         <div className="ac-games">
           {games.map((item) => {
             const Icon = item.icon;
