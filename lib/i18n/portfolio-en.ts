@@ -220,4 +220,7 @@ export const portfolioEnglish: Record<string, string> = {
   "필요한 결과와 지금 막힌 지점부터 이야기하겠습니다.": "Let's discuss the result you need and what's getting in the way.",
   "프로젝트 보기": "View projects",
   "협업 이야기하기": "Discuss a collaboration",
+  "푸른곰 이상형 월드컵": "BlueBear Ideal Type World Cup",
+  "잠깐 — 당신의 이상형을 뽑아드립니다.": "A moment — let's pick your ideal type.",
+  "푸른곰 AI가 선택 패턴을 분석하는 이상형 월드컵. 결과는 책임지지 않습니다.": "An ideal-type world cup where BlueBear AI analyzes your pick pattern. We take no responsibility for the result.",
 };

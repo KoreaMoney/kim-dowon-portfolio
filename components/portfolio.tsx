@@ -4,7 +4,7 @@ import {
   ArrowUpRightIcon, BracketsCurlyIcon, BriefcaseIcon,
   CheckIcon, CopySimpleIcon, DownloadSimpleIcon, EnvelopeSimpleIcon, GitCommitIcon,
   GithubLogoIcon, LinkedinLogoIcon, ListIcon, LockKeyOpenIcon, PhoneIcon,
-  PulseIcon, SquaresFourIcon, TerminalWindowIcon, UserIcon,
+  PulseIcon, SquaresFourIcon, TerminalWindowIcon, TrophyIcon, UserIcon,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useInView, useReducedMotion } from "motion/react";
 import Link from "next/link";
@@ -22,6 +22,7 @@ const navItems = [
   { href: "/work", label: "Projects", icon: SquaresFourIcon },
   { href: "/process", label: "Practice", icon: BracketsCurlyIcon },
   { href: "/career", label: "Career", icon: BriefcaseIcon },
+  { href: "/worldcup", label: "World Cup", icon: TrophyIcon },
   { href: "/contact", label: "Contact", icon: EnvelopeSimpleIcon },
 ] as const;
 
@@ -222,6 +223,11 @@ function ContactSecret() {
   </div></section>;
 }
 
+function WorldCupTeaser() {
+  const { t } = useLocale();
+  return <section className="content-section wc-teaser-section" aria-label={t("푸른곰 이상형 월드컵")}><Link className="wc-teaser" href="/worldcup"><span>INTERMISSION / MINI GAME</span><b>{t("잠깐 — 당신의 이상형을 뽑아드립니다.")}</b><small>{t("푸른곰 AI가 선택 패턴을 분석하는 이상형 월드컵. 결과는 책임지지 않습니다.")}</small><TrophyIcon size={22} /></Link></section>;
+}
+
 function HireActivity() {
   const { t } = useLocale();
   const reduced = useReducedMotion();
@@ -278,7 +284,7 @@ export function Portfolio({ page = "home" }: { page?: "home" | "work" | "process
   const { t } = useLocale();
   const [flowRun, setFlowRun] = useState(0);
   return <main id="main">
-    {page === "home" && <><section id="intro" className="hero-section"><HeroIntro hasRun={flowRun > 0} onRun={() => setFlowRun((value) => value + 1)} /><ProductFlowDemo runVersion={flowRun} /></section><SignalConsole /><HireActivity /><GuideAgent /></>}
+    {page === "home" && <><section id="intro" className="hero-section"><HeroIntro hasRun={flowRun > 0} onRun={() => setFlowRun((value) => value + 1)} /><ProductFlowDemo runVersion={flowRun} /></section><SignalConsole /><HireActivity /><WorldCupTeaser /><GuideAgent /></>}
     {page === "work" && <section id="work" className="content-section work-section"><div className="section-head"><p>SELECTED WORK</p><h2>{t("업무의 복잡함을")}<br />{t("작동하는 제품으로")}</h2><span>{t("AI Agent와 프론트엔드를 분리하지 않고 사용자가 일을 끝내는 흐름으로 설계합니다.")}</span></div><MetricRail /><div className="featured-work">
       <article className="feature-case primary-case"><div className="feature-copy"><small>01 / WISE DENTAL</small><h3>{t("상담에서 예약까지")}<br />{t("문맥을 이어갑니다.")}</h3><p>{t("병원 정보, AI 상담, 상담원 연결과 예약 생성·조회·변경·취소를 한 대화 안에서 처리합니다.")}</p><a href="https://wisedental.aiu-aipage.co.kr/" target="_blank" rel="noreferrer">{t("서비스 보기")} <ArrowUpRightIcon size={16} /></a></div><WiseDentalVisual /></article>
       <article className="feature-case translation-case"><div className="feature-copy"><small>02 / TRANSLATION AGENT</small><h3>{t("10개 언어 실시간 번역 Agent를")}<br />{t("직접 설계하고 개발했습니다.")}</h3><p>{t("번역 요청부터 언어 분기, 문맥 유지, 결과 반환까지 전체 흐름을 설계·개발했습니다. 중복 모델 호출을 제거해 내부 측정 처리 시간을 15초에서 7초로 줄였습니다.")}</p><div className="fact-line"><span>10 languages</span><span>15s → 7s</span><span>{t("약 53% 단축")}</span></div></div><TranslationVisual /></article>
