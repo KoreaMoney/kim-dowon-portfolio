@@ -270,6 +270,7 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const keyDown = (event: KeyboardEvent) => {
+      if (phaseRef.current !== "run") return;
       const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
       if (["ArrowLeft", "ArrowRight", "a", "d"].includes(key)) { gameRef.current.keys.add(key); event.preventDefault(); }
       if (key === "ArrowUp" || key === "w" || key === " ") { tryJump(); event.preventDefault(); }

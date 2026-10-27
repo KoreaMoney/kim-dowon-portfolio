@@ -941,7 +941,7 @@ html[lang="en"] .career-metric-value > span { min-width:0; overflow-wrap:anywher
 /* Stickman bout controls */
 .sf-controls { display:grid; gap:8px; }
 .sf-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-.sf-row:last-child { grid-template-columns:repeat(4,1fr); }
+.sf-row--four { grid-template-columns:repeat(4,1fr); }
 .sf-controls button { display:grid; min-height:50px; place-items:center; border:1px solid #315372; background:#0d2949; color:#c8ddef; font:700 13px ui-monospace,SFMono-Regular,Menlo,monospace; cursor:pointer; touch-action:none; user-select:none; }
 .sf-controls button:active { background:var(--cobalt); color:white; }
 .sf-controls .sf-attack { border-color:var(--cobalt); color:#8fc3ff; letter-spacing:.08em; }

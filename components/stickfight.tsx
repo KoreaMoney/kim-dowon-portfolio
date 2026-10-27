@@ -30,6 +30,8 @@ type FightState = {
   player: Fighter;
   enemy: Fighter;
   round: number;
+  pw: number;
+  ew: number;
   roundState: RoundState;
   stateStart: number;
   keys: Set<string>;
@@ -52,18 +54,18 @@ const difficulties: Record<Difficulty, { label: { ko: string; en: string }; spee
   hard: { label: { ko: "어려움", en: "Hard" }, speed: 1.15, dmg: 1.35, aggro: 1.25, eHp: 1.2, pDmg: .85 },
 };
 
-const opponents = [
-  { name: { ko: "면접 대기자", en: "The Interviewee" }, color: "#7c8ea3", speed: 2.1, dmgMul: .75, aggression: .45, jumpy: false, caster: false },
-  { name: { ko: "베테랑 졸라맨", en: "Veteran Stickman" }, color: "#42566e", speed: 2.8, dmgMul: 1, aggression: .62, jumpy: false, caster: false },
-  { name: { ko: "전설의 졸라맨", en: "Legendary Stickman" }, color: "#101c2c", speed: 3.3, dmgMul: 1.15, aggression: .8, jumpy: true, caster: true },
+const roundForms = [
+  { color: "#7c8ea3", speed: 2.1, dmgMul: .75, aggression: .45, jumpy: false, caster: false },
+  { color: "#42566e", speed: 2.8, dmgMul: 1, aggression: .62, jumpy: true, caster: false },
+  { color: "#101c2c", speed: 3.3, dmgMul: 1.15, aggression: .8, jumpy: true, caster: true },
 ] as const;
 
 const newFighter = (x: number, dir: 1 | -1): Fighter => ({ x, y: 0, vy: 0, dir, hp: 100, action: "idle", actionStart: 0, hitDone: false, lastWave: 0 });
 
-function freshFight(round: number, diff: Difficulty): FightState {
+function freshFight(state: FightState | null, round: number, diff: Difficulty, pw: number, ew: number): FightState {
   const enemy = newFighter(500, -1);
   enemy.hp = 100 * difficulties[diff].eHp;
-  return { player: newFighter(140, 1), enemy, round, roundState: "intro", stateStart: performance.now(), keys: new Set(), sparks: [], waves: [], lastBurst: 0, diff };
+  return { player: newFighter(140, 1), enemy, round, pw, ew, roundState: "intro", stateStart: performance.now(), keys: state?.keys ?? new Set(), sparks: [], waves: [], lastBurst: 0, diff };
 }
 
 function burst(x: number, y: number, sparks: Spark[]) {
@@ -157,7 +159,8 @@ function jointsOf(f: Fighter, now: number): Joints {
   return idleJ(now);
 }
 
-function drawFrame(ctx: CanvasRenderingContext2D, g: FightState, now: number, en: boolean, playerName: string, enemyName: string, enemyColor: string, revealed: boolean) {
+function drawFrame(ctx: CanvasRenderingContext2D, g: FightState, now: number, en: boolean, revealed: boolean) {
+  const foe = roundForms[g.round];
   ctx.fillStyle = "#071b32";
   ctx.fillRect(0, 0, W, H);
   ctx.strokeStyle = "rgba(143,195,255,.07)";
@@ -169,23 +172,27 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: FightState, now: number, en
   ctx.fillStyle = "#8ea9c1";
   ctx.font = "600 9px ui-monospace, SFMono-Regular, Menlo, monospace";
   ctx.textAlign = "left";
-  ctx.fillText(playerName, 16, 22);
+  ctx.fillText(en ? "BLUE STICKMAN" : "푸른 졸라맨", 16, 22);
   ctx.textAlign = "right";
-  ctx.fillText(revealed ? "KIM DOWON" : enemyName.toUpperCase(), W - 16, 22);
+  ctx.fillText(revealed ? "KIM DOWON" : "???", W - 16, 22);
   const barW = 240;
   const enemyMax = 100 * difficulties[g.diff].eHp;
   ctx.fillStyle = "#0d2949"; ctx.fillRect(16, 28, barW, 9); ctx.fillRect(W - 16 - barW, 28, barW, 9);
   ctx.fillStyle = "#0b63ce"; ctx.fillRect(16, 28, barW * Math.max(g.player.hp, 0) / 100, 9);
-  ctx.fillStyle = enemyColor; ctx.fillRect(W - 16 - barW, 28, barW * Math.max(g.enemy.hp, 0) / enemyMax, 9);
+  ctx.fillStyle = foe.color; ctx.fillRect(W - 16 - barW, 28, barW * Math.max(g.enemy.hp, 0) / enemyMax, 9);
   ctx.strokeStyle = "#456581"; ctx.lineWidth = 1;
   ctx.strokeRect(16.5, 28.5, barW, 9); ctx.strokeRect(W - 16 - barW + .5, 28.5, barW, 9);
   const waveReady = Math.min((now - g.player.lastWave) / WAVE_CD, 1);
   ctx.fillStyle = "#0d2949"; ctx.fillRect(16, 41, 120, 5);
   ctx.fillStyle = waveReady >= 1 ? "#5ee8a2" : "#315372"; ctx.fillRect(16, 41, 120 * waveReady, 5);
-  ctx.fillStyle = "#6e8ba4"; ctx.fillText(en ? "WAVE" : "장풍", 142, 46);
+  ctx.fillStyle = "#6e8ba4"; ctx.textAlign = "left"; ctx.fillText(en ? "WAVE" : "장풍", 142, 46);
   ctx.textAlign = "center";
   ctx.fillStyle = "#8ea9c1";
-  ctx.fillText(`ROUND ${g.round + 1}/3`, W / 2, 38);
+  ctx.fillText(`ROUND ${g.round + 1}`, W / 2, 24);
+  ctx.fillStyle = "#4aa3ff";
+  ctx.fillText("●".repeat(g.pw) + "○".repeat(Math.max(2 - g.pw, 0)), W / 2 - 54, 40);
+  ctx.fillStyle = "#b0524a";
+  ctx.fillText("○".repeat(Math.max(2 - g.ew, 0)) + "●".repeat(g.ew), W / 2 + 54, 40);
   for (const wave of g.waves) {
     const color = wave.owner === "p" ? "#4aa3ff" : "#ff7a6b";
     ctx.globalAlpha = .85;
@@ -203,7 +210,7 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: FightState, now: number, en
     ctx.fillRect(spark.x, spark.y, spark.size, spark.size);
   }
   ctx.globalAlpha = 1;
-  for (const [f, color] of [[g.player, "#4aa3ff"], [g.enemy, enemyColor]] as [Fighter, string][]) {
+  for (const [f, color] of [[g.player, "#4aa3ff"], [g.enemy, foe.color]] as [Fighter, string][]) {
     const shadow = Math.max(18 - f.y * .12, 7);
     ctx.globalAlpha = .3;
     ctx.fillStyle = "#000";
@@ -225,15 +232,23 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: FightState, now: number, en
     ctx.fillText(p > .4 ? "FIGHT!" : "…", W / 2, H / 2 + 14);
     ctx.globalAlpha = 1;
   }
-  if (g.roundState === "clear" && g.enemy.action === "ko") {
-    ctx.save();
-    ctx.translate(g.enemy.x, GROUND_Y - 44);
-    ctx.rotate(-.18);
-    ctx.fillStyle = "#5ee8a2";
-    ctx.font = "800 13px ui-monospace, SFMono-Regular, Menlo, monospace";
+  if (g.roundState === "clear") {
+    ctx.fillStyle = "#eaf4ff";
+    ctx.font = "800 20px ui-monospace, SFMono-Regular, Menlo, monospace";
     ctx.textAlign = "center";
-    ctx.fillText(en ? "IDENTITY: KIM DOWON" : "정체: 김도원", 0, 0);
-    ctx.restore();
+    const playerWon = g.enemy.action === "ko";
+    ctx.fillText(playerWon ? "ROUND CLEAR" : "ROUND LOST", W / 2, H / 2 - 44);
+    ctx.font = "700 13px ui-monospace, SFMono-Regular, Menlo, monospace";
+    ctx.fillStyle = "#8ea9c1";
+    ctx.fillText(`${g.pw} : ${g.ew}`, W / 2, H / 2 - 22);
+    if (playerWon && g.enemy.action === "ko") {
+      ctx.save();
+      ctx.translate(g.enemy.x, GROUND_Y - 44);
+      ctx.rotate(-.18);
+      ctx.fillStyle = "#5ee8a2";
+      ctx.fillText(en ? "IDENTITY: KIM DOWON?!" : "정체: 김도원?!", 0, 0);
+      ctx.restore();
+    }
   }
 }
 
@@ -242,10 +257,10 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
   const en = locale === "en";
   const reduced = useReducedMotion();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gameRef = useRef<FightState>(freshFight(0, "normal"));
+  const gameRef = useRef<FightState>(freshFight(null, 0, "normal", 0, 0));
   const phaseRef = useRef<"ready" | "fight" | "won" | "lost">("ready");
   const [phase, setPhase] = useState<"ready" | "fight" | "won" | "lost">("ready");
-  const [round, setRound] = useState(0);
+  const [score, setScore] = useState<[number, number]>([0, 0]);
   const [diff, setDiff] = useState<Difficulty>("normal");
   const [showPromo, setShowPromo] = useState(false);
 
@@ -253,13 +268,10 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
     phaseRef.current = phase;
   }, [phase]);
 
-  const enemy = opponents[round] ?? opponents[opponents.length - 1];
-  const enemyName = enemy.name[locale];
-
   const startGame = (d: Difficulty) => {
-    gameRef.current = freshFight(0, d);
+    gameRef.current = freshFight(null, 0, d, 0, 0);
     setDiff(d);
-    setRound(0);
+    setScore([0, 0]);
     setShowPromo(false);
     setPhase("fight");
   };
@@ -289,9 +301,9 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const keyDown = (event: KeyboardEvent) => {
-      const g = gameRef.current;
+      if (phaseRef.current !== "fight") return;
       const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
-      if (["ArrowLeft", "ArrowRight", "a", "d"].includes(key)) { g.keys.add(key); event.preventDefault(); }
+      if (["ArrowLeft", "ArrowRight", "a", "d"].includes(key)) { gameRef.current.keys.add(key); event.preventDefault(); }
       if (key === "ArrowUp" || key === "w" || key === " ") { tryJump(); event.preventDefault(); }
       if (key === "z" || key === "j") tryAttack("punch");
       if (key === "x" || key === "k") tryAttack("kick");
@@ -320,8 +332,8 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
     canvas.width = W * dpr;
     canvas.height = H * dpr;
     ctx.scale(dpr, dpr);
-    drawFrame(ctx, gameRef.current, performance.now(), en, en ? "BLUE STICKMAN" : "푸른 졸라맨", enemyName, enemy.color, false);
-  }, [en, enemyName, enemy.color]);
+    drawFrame(ctx, gameRef.current, performance.now(), en, false);
+  }, [en]);
 
   useEffect(() => {
     if (phase !== "fight" && phase !== "won") return;
@@ -331,7 +343,7 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
     const step = (now: number) => {
       const g = gameRef.current;
       const dm = difficulties[g.diff];
-      const foe = opponents[g.round];
+      const foe = roundForms[g.round];
       if (phase === "fight" && g.roundState === "intro" && now - g.stateStart > 950) { g.roundState = "live"; g.stateStart = now; }
       if (phase === "fight" && g.roundState === "live") {
         const p = g.player;
@@ -366,7 +378,7 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
           } else if (dist > desired + 8) {
             e.action = "walk";
             e.x += Math.sign(p.x - e.x) * foe.speed * dm.speed;
-            if ((foe.jumpy || g.diff === "hard") && Math.random() < .012) e.vy = JUMP_V;
+            if (foe.jumpy && Math.random() < .012) e.vy = JUMP_V;
           } else if (now - e.actionStart > 500 - foe.aggression * dm.aggro * 260 + Math.random() * 300) {
             const roll = Math.random();
             e.action = roll < .62 ? "punch" : roll < .9 ? "kick" : "uppercut";
@@ -432,24 +444,20 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
           e.x = Math.min(Math.max(e.x - Math.sign(gap) * push, 44), W - 44);
         }
         if (e.action === "ko" || p.action === "ko") {
+          if (e.action === "ko") { g.pw += 1; if (p.action !== "ko") { p.action = "win"; p.actionStart = now; } }
+          else { g.ew += 1; }
+          setScore([g.pw, g.ew]);
           g.roundState = "clear";
           g.stateStart = now;
-          if (e.action === "ko") { p.action = p.action === "ko" ? "ko" : "win"; p.actionStart = now; }
         }
       }
-      if (g.roundState === "clear" && now - g.stateStart > 1500) {
-        if (g.enemy.action === "ko") {
-          if (g.round >= opponents.length - 1) {
-            setPhase("won");
-          } else {
-            const next = g.round + 1;
-            const keys = g.keys;
-            gameRef.current = freshFight(next, g.diff);
-            gameRef.current.keys = keys;
-            setRound(next);
-          }
-        } else {
+      if (g.roundState === "clear" && now - g.stateStart > 1600) {
+        if (g.pw >= 2) {
+          setPhase("won");
+        } else if (g.ew >= 2) {
           setPhase("lost");
+        } else {
+          gameRef.current = freshFight(g, g.round + 1, g.diff, g.pw, g.ew);
         }
       }
       if (phase === "won" && !reduced) {
@@ -462,13 +470,13 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
         }
         g.sparks = g.sparks.filter((spark) => spark.life > 0);
       }
-      const revealed = phase === "won" || (g.roundState === "clear" && g.enemy.action === "ko");
-      drawFrame(ctx, g, now, en, en ? "BLUE STICKMAN" : "푸른 졸라맨", enemyName, foe.color, revealed);
+      const revealed = phase === "won";
+      drawFrame(ctx, g, now, en, revealed);
       raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [phase, en, enemyName, reduced]);
+  }, [phase, en, reduced]);
 
   useEffect(() => {
     if (phase !== "won") return;
@@ -487,12 +495,12 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
   );
 
   const commentary = phase === "won"
-    ? (en ? "The last stickman standing… is also Kim Dowon. Everyone in this arena was him." : "최후까지 서 있는 졸라맨도… 김도원이었습니다. 이 아레나는 전부 김도원이었어요.")
+    ? (en ? "Unmasked: the mystery stickman was Kim Dowon all along. He always is." : "정체 공개: 수수께끼 졸라맨은 김도원이었습니다. 늘 그렇듯이요.")
     : phase === "lost"
-      ? (en ? "Knocked out. Lower the difficulty if you must — the secret will wait." : "쓰러졌습니다. 필요하면 난이도를 낮추세요 — 비밀은 기다립니다.")
+      ? (en ? "Match lost. Lower the difficulty if you must — the secret will wait." : "매치 패배. 필요하면 난이도를 낮추세요 — 비밀은 기다립니다.")
       : phase === "fight"
-        ? (en ? `Round ${round + 1}/3. Move: arrows·A/D. Jump: ↑·W·Space. Punch: Z·J, Kick: X·K, Uppercut: C·U, Wave: V·S.` : `라운드 ${round + 1}/3. 이동: 방향키·A/D. 점프: ↑·W·스페이스. 펀치: Z·J, 킥: X·K, 어퍼컷: C·U, 장풍: V·S.`)
-        : (en ? "A stickman tournament. Beat 3 opponents and I'll tell you who they really are. Pick your difficulty first." : "졸라맨 토너먼트입니다. 상대 3명을 쓰러뜨리면 진짜 정체를 알려드리죠. 먼저 난이도를 고르세요.");
+        ? (en ? `Best of 3 — score ${score[0]}:${score[1]}. Move: arrows·A/D. Jump: ↑·W·Space. Punch: Z·J, Kick: X·K, Uppercut: C·U, Wave: V·S.` : `3판 2선승 — 스코어 ${score[0]}:${score[1]}. 이동: 방향키·A/D. 점프: ↑·W·스페이스. 펀치: Z·J, 킥: X·K, 어퍼컷: C·U, 장풍: V·S.`)
+        : (en ? "Best of 3 vs a mystery stickman. Win 2 rounds and I'll unmask him. Pick your difficulty first." : "수수께끼 졸라맨과 3판 2선승. 2라운드를 이기면 정체를 공개합니다. 먼저 난이도를 고르세요.");
 
   return (
     <main id="main" className="wc-page">
@@ -500,7 +508,7 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
         <header className="wc-hud">
           {onExit && <button type="button" className="ac-back" onClick={onExit}>← {en ? "Games" : "게임 선택"}</button>}
           <span className="wc-hud-stage">{en ? "STICKMAN BOUT" : "졸라맨 대전"}</span>
-          <span className="wc-hud-match">{en ? `ROUND ${round + 1}/3 · ${difficulties[diff].label.en}` : `${round + 1}/3 라운드 · ${difficulties[diff].label.ko}`}</span>
+          <span className="wc-hud-match">{score[0]} : {score[1]} · {en ? difficulties[diff].label.en : difficulties[diff].label.ko}</span>
         </header>
         <BearBubble>{commentary}</BearBubble>
         <div className="bb-frame">
@@ -511,24 +519,24 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
               <span className="wc-kicker">STICKMAN BOUT</span>
               <h2>{en ? "Enter the arena." : "아레나 입장."}</h2>
               {diffButtons}
-              <p>{en ? "Move: arrows·A/D. Jump: ↑·W·Space. Punch: Z·J. Kick: X·K. Uppercut: C·U. Wave: V·S. Touch buttons appear in-fight." : "이동: 방향키·A/D. 점프: ↑·W·스페이스. 펀치: Z·J. 킥: X·K. 어퍼컷: C·U. 장풍: V·S. 모바일은 대전 중 버튼을 사용하세요."}</p>
+              <p>{en ? "Best of 3. Move: arrows·A/D. Jump: ↑·W·Space. Punch: Z·J. Kick: X·K. Uppercut: C·U. Wave: V·S. Touch buttons appear in-fight." : "3판 2선승. 이동: 방향키·A/D. 점프: ↑·W·스페이스. 펀치: Z·J. 킥: X·K. 어퍼컷: C·U. 장풍: V·S. 모바일은 대전 중 버튼을 사용하세요."}</p>
               <Button type="button" onClick={() => startGame(diff)}>{en ? "Fight" : "대전 시작"} <BoxingGloveIcon size={17} /></Button>
             </div>
           )}
           {phase === "lost" && (
             <div className="bb-overlay">
               <BlueBear mood="shocked" className="bb-overlay-bear" />
-              <span className="wc-kicker">K.O.</span>
-              <h2>{en ? "You went down." : "쓰러졌습니다."}</h2>
+              <span className="wc-kicker">DEFEAT</span>
+              <h2>{en ? "Match lost." : "매치 패배."}</h2>
               {diffButtons}
-              <p>{en ? "The stickmen's identities remain hidden. Stand up and try again." : "졸라맨들의 정체는 아직 베일에 있습니다. 일어나서 다시 도전하세요."}</p>
+              <p>{en ? "The mystery stickman keeps his mask. Stand up and try again." : "수수께끼 졸라맨은 가면을 지켰습니다. 일어나서 다시 도전하세요."}</p>
               <Button type="button" onClick={() => startGame(diff)}><ArrowCounterClockwiseIcon size={17} /> {en ? "Rematch" : "재대결"}</Button>
             </div>
           )}
           {showPromo && (
             <div className="bb-overlay bb-promo">
               <BlueBear mood="smug" className="bb-overlay-bear" />
-              <span className="wc-kicker">3-0 VICTORY</span>
+              <span className="wc-kicker">{en ? `VICTORY ${score[0]}:${score[1]}` : `승리 ${score[0]}:${score[1]}`}</span>
               <h2>{en ? "The winner is… Kim Dowon." : "승자는… 김도원."}</h2>
               <p className="bb-promo-copy">
                 {en ? "Thinks about the product," : "제품을 생각하고"}<br />
@@ -552,7 +560,7 @@ export function StickFight({ onExit }: { onExit?: () => void }) {
               <button type="button" aria-label={en ? "Jump" : "점프"} onPointerDown={() => tryJump()}>▲</button>
               <button type="button" aria-label={en ? "Move right" : "오른쪽 이동"} onPointerDown={() => gameRef.current.keys.add("ArrowRight")} onPointerUp={() => gameRef.current.keys.delete("ArrowRight")} onPointerLeave={() => gameRef.current.keys.delete("ArrowRight")}>▶</button>
             </div>
-            <div className="sf-row">
+            <div className="sf-row sf-row--four">
               <button type="button" className="sf-attack" onPointerDown={() => tryAttack("punch")}>{en ? "PUNCH" : "펀치"}</button>
               <button type="button" className="sf-attack" onPointerDown={() => tryAttack("kick")}>{en ? "KICK" : "킥"}</button>
               <button type="button" className="sf-attack" onPointerDown={() => tryAttack("uppercut")}>{en ? "UPPER" : "어퍼컷"}</button>
