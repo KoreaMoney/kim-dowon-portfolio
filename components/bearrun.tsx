@@ -10,82 +10,112 @@ import { Button } from "@/components/ui/button";
 
 const W = 640;
 const H = 420;
-const LEVEL_W = 2300;
 const GROUND_TOP = 352;
 const RUN_SPEED = 4.6;
 const JUMP_V = -13;
 const GRAVITY = .7;
 const PW = 20;
 const PH = 34;
-const FLAG_X = 2240;
+const MAX_LEVEL = 3;
 const SPARK_COLORS = ["#8fc3ff", "#5ee8a2", "#ffffff", "#4aa3ff", "#ffd166"];
-const CHIP_COLLECT = 12;
+const CHIP_LABELS = ["PERF", "UI", "DX", "TEST", "AGENT", "SSR", "A11Y", "CACHE", "API", "STATE", "EDGE", "AI", "CI", "LCP", "TDD", "REALTIME", "i18n", "SEO"];
 
 type Plat = { x: number; y: number; w: number; h: number };
 type Chip = { x: number; y: number; label: string; got: boolean };
 type Bug = { x: number; minX: number; maxX: number; spd: number; dir: 1 | -1; dead: boolean; deadAt: number };
 type Spark = { x: number; y: number; vx: number; vy: number; life: number; maxLife: number; color: string; size: number };
 type Runner = { x: number; y: number; vx: number; vy: number; grounded: boolean; hearts: number; invUntil: number };
+type BannerRect = { x: number; y: number; w: number; h: number; url: string };
 
 type RunState = {
   p: Runner;
+  level: number;
+  plats: Plat[];
   chips: Chip[];
   bugs: Bug[];
+  levelW: number;
+  flagX: number;
   camX: number;
   cpX: number;
   hurtAt: number;
   keys: Set<string>;
   sparks: Spark[];
   lastBurst: number;
-  plane: { x: number; active: boolean };
+  plane: { x: number; active: boolean; bannerIdx: number };
   planesSeen: number;
+  bannerRect: BannerRect | null;
 };
 
-const platforms: Plat[] = [
-  { x: 0, y: GROUND_TOP, w: 480, h: 80 },
-  { x: 540, y: GROUND_TOP, w: 340, h: 80 },
-  { x: 1000, y: GROUND_TOP, w: 330, h: 80 },
-  { x: 1420, y: GROUND_TOP, w: 320, h: 80 },
-  { x: 1850, y: GROUND_TOP, w: 450, h: 80 },
-  { x: 230, y: 280, w: 90, h: 14 },
-  { x: 400, y: 230, w: 80, h: 14 },
-  { x: 620, y: 290, w: 90, h: 14 },
-  { x: 790, y: 236, w: 80, h: 14 },
-  { x: 1020, y: 282, w: 90, h: 14 },
-  { x: 1170, y: 224, w: 80, h: 14 },
-  { x: 1420, y: 284, w: 90, h: 14 },
-  { x: 1560, y: 230, w: 80, h: 14 },
-  { x: 1840, y: 278, w: 90, h: 14 },
-  { x: 1980, y: 230, w: 80, h: 14 },
-];
+const bannerDefs = [
+  { ko: "제품을 생각하고 기업을 생각하고 의사소통이 뛰어난 김도원 추천합니다", en: "Product · Business · Communication — Kim Dowon, recommended.", url: "" },
+  { ko: "OpenStockAI — 질문을 전문 역할로 라우팅하는 AI Agent ↗", en: "OpenStockAI — an AI agent that routes expert queries ↗", url: "https://opendoor.supply/ko" },
+  { ko: "OpenDoorLabs · 더 많은 프로젝트는 Selected Work에서 ↗", en: "OpenDoorLabs — more case studies in Selected Work ↗", url: "/work" },
+] as const;
 
-const chipDefs = [
-  { x: 270, y: 250, label: "PERF" }, { x: 435, y: 200, label: "UI" }, { x: 660, y: 260, label: "DX" },
-  { x: 825, y: 206, label: "TEST" }, { x: 960, y: 310, label: "EDGE" }, { x: 1060, y: 252, label: "AGENT" },
-  { x: 1205, y: 194, label: "SSR" }, { x: 1460, y: 254, label: "A11Y" }, { x: 1595, y: 200, label: "CACHE" },
-  { x: 1700, y: 318, label: "AI" }, { x: 1880, y: 248, label: "API" }, { x: 2015, y: 200, label: "STATE" },
-];
+function buildLevel(level: number) {
+  const levelW = 2300 + (level - 1) * 420;
+  const flagX = levelW - 70;
+  const segs: Plat[] = [];
+  let gx = 0;
+  while (gx < levelW) {
+    const len = Math.min(320 + Math.random() * 150, levelW - gx);
+    segs.push({ x: gx, y: GROUND_TOP, w: len, h: 80 });
+    gx += len;
+    if (gx < levelW - 260) gx += 55 + level * 12 + Math.random() * 38;
+    else break;
+  }
+  const last = segs[segs.length - 1];
+  if (last.x + last.w < levelW) segs.push({ x: last.x + last.w, y: GROUND_TOP, w: levelW - last.x - last.w, h: 80 });
+  const plats: Plat[] = [...segs];
+  const chips: Chip[] = [];
+  let li = 0;
+  for (const seg of segs) {
+    if (seg.w < 150) continue;
+    const floaters = seg.w > 300 ? 2 : 1;
+    for (let f = 0; f < floaters && li < CHIP_LABELS.length; f += 1) {
+      const fw = 80 + Math.random() * 20;
+      const fx = seg.x + 30 + Math.random() * Math.max(seg.w - fw - 90, 24);
+      const fy = 220 + Math.random() * 64;
+      plats.push({ x: fx, y: fy, w: fw, h: 14 });
+      if (Math.random() < .85) {
+        chips.push({ x: fx + fw / 2, y: fy - 30, label: CHIP_LABELS[li], got: false });
+        li += 1;
+      }
+    }
+  }
+  const bugs: Bug[] = [];
+  for (const [i, seg] of segs.entries()) {
+    if (i === 0 || seg.w < 160) continue;
+    const count = seg.w > 300 && level >= 2 ? 2 : 1;
+    for (let b = 0; b < count; b += 1) {
+      const minX = seg.x + 20 + b * 60;
+      const maxX = Math.min(seg.x + seg.w - 24, minX + 160 + Math.random() * 80);
+      if (maxX - minX < 60) continue;
+      bugs.push({ x: minX + Math.random() * (maxX - minX), minX, maxX, spd: 1.2 + level * .28 + Math.random() * .3, dir: 1, dead: false, deadAt: 0 });
+    }
+  }
+  return { plats, chips, bugs, levelW, flagX };
+}
 
-const bugDefs = [
-  { x: 600, minX: 560, maxX: 830, spd: 1.3 },
-  { x: 1100, minX: 1030, maxX: 1280, spd: 1.5 },
-  { x: 1500, minX: 1460, maxX: 1700, spd: 1.2 },
-  { x: 1900, minX: 1880, maxX: 2120, spd: 1.6 },
-];
-
-function freshRun(): RunState {
+function freshRun(level = 1, hearts = 3): RunState {
+  const built = buildLevel(level);
   return {
-    p: { x: 50, y: GROUND_TOP - PH, vx: 0, vy: 0, grounded: true, hearts: 3, invUntil: 0 },
-    chips: chipDefs.map((c) => ({ ...c, got: false })),
-    bugs: bugDefs.map((b) => ({ ...b, dir: 1 as const, dead: false, deadAt: 0 })),
+    p: { x: 50, y: GROUND_TOP - PH, vx: 0, vy: 0, grounded: true, hearts, invUntil: 0 },
+    level,
+    plats: built.plats,
+    chips: built.chips,
+    bugs: built.bugs,
+    levelW: built.levelW,
+    flagX: built.flagX,
     camX: 0,
     cpX: 50,
     hurtAt: 0,
     keys: new Set(),
     sparks: [],
     lastBurst: 0,
-    plane: { x: 0, active: false },
+    plane: { x: 0, active: false, bannerIdx: 0 },
     planesSeen: 0,
+    bannerRect: null,
   };
 }
 
@@ -253,11 +283,11 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
   ctx.fillRect(0, 0, W, GROUND_TOP + 2);
   ctx.fillStyle = "rgba(200,220,255,.5)";
   for (let s = 0; s < 40; s += 1) {
-    const sx = (s * 137.5) % LEVEL_W - cam * .15;
+    const sx = (s * 137.5) % g.levelW - cam * .15;
     const sy = 18 + ((s * 89) % 150);
     if (sx > -4 && sx < W + 4) ctx.fillRect(sx, sy, 1.4, 1.4);
   }
-  for (const [cx0, cy] of [[180, 62], [700, 96], [1250, 54], [1800, 88], [2240, 66]] as [number, number][]) {
+  for (const [cx0, cy] of [[180, 62], [700, 96], [1250, 54], [1800, 88], [2240, 66], [2700, 74], [3100, 60]] as [number, number][]) {
     const cxx = cx0 - cam * .3;
     if (cxx < -80 || cxx > W + 80) continue;
     ctx.fillStyle = "rgba(143,195,255,.09)";
@@ -267,7 +297,7 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
     ctx.fill();
   }
   ctx.fillStyle = "#0d2949";
-  for (const hill of [140, 620, 1160, 1680, 2160]) {
+  for (const hill of [140, 620, 1160, 1680, 2160, 2600, 3050]) {
     const hx = hill - cam * .45;
     if (hx > -140 && hx < W + 140) {
       ctx.beginPath();
@@ -275,7 +305,7 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
       ctx.fill();
     }
   }
-  for (const plat of platforms) {
+  for (const plat of g.plats) {
     const px = plat.x - cam;
     if (px + plat.w < -8 || px > W + 8) continue;
     const isGround = plat.h > 20;
@@ -325,7 +355,7 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
     if (bx < -30 || bx > W + 30) continue;
     drawBug(ctx, { ...bug, x: bx }, now);
   }
-  const fx = FLAG_X - cam;
+  const fx = g.flagX - cam;
   if (fx > -20 && fx < W + 20) {
     ctx.fillStyle = "#2a5a8f";
     ctx.beginPath();
@@ -369,10 +399,10 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
   ctx.fillText("♥".repeat(Math.max(g.p.hearts, 0)) || "—", 16, 24);
   ctx.fillStyle = "#5ee8a2";
   const got = g.chips.filter((c) => c.got).length;
-  ctx.fillText(`SKILLS ${got}/${CHIP_COLLECT}`, 16, 40);
+  ctx.fillText(`SKILLS ${got}/${g.chips.length}`, 16, 40);
   ctx.textAlign = "right";
   ctx.fillStyle = "#8ea9c1";
-  ctx.fillText(`MAP ${Math.min(Math.round(g.p.x / FLAG_X * 100), 100)}%`, W - 16, 24);
+  ctx.fillText(`LV ${g.level}/${MAX_LEVEL} · MAP ${Math.min(Math.round(g.p.x / g.flagX * 100), 100)}%`, W - 16, 24);
   ctx.textAlign = "center";
   if (phase === "ready") {
     ctx.fillStyle = "#8ea9c1";
@@ -380,15 +410,17 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
     ctx.fillText(en ? "find who planted the flag" : "플래그를 꽂은 주인을 찾아보세요", W / 2, H - 16);
   }
   if (g.plane.active) {
+    const def = bannerDefs[g.plane.bannerIdx % bannerDefs.length];
     const px = g.plane.x - cam;
     const py = 62 + Math.sin(now / 260) * 4;
-    const bannerText = en ? "Product · Business · Communication — Kim Dowon, recommended." : "제품을 생각하고 기업을 생각하고 의사소통이 뛰어난 김도원 추천합니다";
+    const bannerText = en ? def.en : def.ko;
     ctx.font = "700 9px ui-monospace, SFMono-Regular, Menlo, monospace";
     const textW = ctx.measureText(bannerText).width;
     const bw = textW + 20;
     const bh = 20;
     const bx = px - 26 - bw;
     const by = py - bh / 2 + Math.sin(now / 180 + px * .02) * 2;
+    g.bannerRect = def.url ? { x: bx, y: by, w: bw, h: bh, url: def.url } : null;
     ctx.strokeStyle = "#8ea9c1";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -396,7 +428,7 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
     ctx.lineTo(bx + bw, by + bh / 2);
     ctx.stroke();
     ctx.fillStyle = "rgba(234,244,255,.95)";
-    ctx.strokeStyle = "#2a5a8f";
+    ctx.strokeStyle = def.url ? "#0b63ce" : "#2a5a8f";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.roundRect(bx, by, bw, bh, 4);
@@ -435,6 +467,8 @@ function drawFrame(ctx: CanvasRenderingContext2D, g: RunState, now: number, en: 
     ctx.moveTo(px + 14, py + Math.sin(propA) * 6);
     ctx.lineTo(px + 14, py - Math.sin(propA) * 6);
     ctx.stroke();
+  } else {
+    g.bannerRect = null;
   }
   ctx.restore();
 }
@@ -445,8 +479,9 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
   const reduced = useReducedMotion();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<RunState>(freshRun());
-  const phaseRef = useRef<"ready" | "run" | "won" | "lost">("ready");
-  const [phase, setPhase] = useState<"ready" | "run" | "won" | "lost">("ready");
+  const phaseRef = useRef<"ready" | "run" | "stage" | "won" | "lost">("ready");
+  const [phase, setPhase] = useState<"ready" | "run" | "stage" | "won" | "lost">("ready");
+  const [level, setLevel] = useState(1);
   const [showPromo, setShowPromo] = useState(false);
 
   useEffect(() => {
@@ -454,8 +489,28 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
   }, [phase]);
 
   const startGame = () => {
-    gameRef.current = freshRun();
+    gameRef.current = freshRun(1, 3);
+    setLevel(1);
     setShowPromo(false);
+    setPhase("run");
+  };
+
+  const nextLevel = () => {
+    const g = gameRef.current;
+    const next = g.level + 1;
+    const hearts = Math.min(g.p.hearts + 1, 4);
+    const built = buildLevel(next);
+    g.level = next;
+    g.plats = built.plats;
+    g.chips = built.chips;
+    g.bugs = built.bugs;
+    g.levelW = built.levelW;
+    g.flagX = built.flagX;
+    g.p = { x: 50, y: GROUND_TOP - PH, vx: 0, vy: 0, grounded: true, hearts, invUntil: 0 };
+    g.camX = 0;
+    g.cpX = 50;
+    g.plane.active = false;
+    setLevel(next);
     setPhase("run");
   };
 
@@ -492,7 +547,20 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
     const keyUp = (event: KeyboardEvent) => {
       gameRef.current.keys.delete(event.key.length === 1 ? event.key.toLowerCase() : event.key);
     };
-    const onDown = () => tryJump();
+    const onDown = (event: PointerEvent) => {
+      const g = gameRef.current;
+      const br = g.bannerRect;
+      if (br) {
+        const rect = canvas.getBoundingClientRect();
+        const cx = (event.clientX - rect.left) * (W / rect.width);
+        const cy = (event.clientY - rect.top) * (H / rect.height);
+        if (cx >= br.x && cx <= br.x + br.w && cy >= br.y && cy <= br.y + br.h) {
+          window.open(br.url, "_blank", "noreferrer");
+          return;
+        }
+      }
+      tryJump();
+    };
     canvas.addEventListener("pointerdown", onDown);
     window.addEventListener("keydown", keyDown);
     window.addEventListener("keyup", keyUp);
@@ -527,12 +595,12 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
         p.vx = move ? Math.min(Math.max(p.vx + move * .9, -RUN_SPEED), RUN_SPEED) : p.vx * .82;
         if (Math.abs(p.vx) < .2) p.vx = 0;
         p.x += p.vx;
-        p.x = Math.min(Math.max(p.x, 12), LEVEL_W - 12);
+        p.x = Math.min(Math.max(p.x, 12), g.levelW - 12);
         const prevY = p.y;
         p.vy += GRAVITY;
         p.y += p.vy;
         p.grounded = false;
-        for (const plat of platforms) {
+        for (const plat of g.plats) {
           if (!overlaps(p.x - PW / 2, p.y, PW, PH, plat.x, plat.y, plat.w, plat.h)) continue;
           if (p.vy >= 0 && prevY + PH <= plat.y + 8) {
             p.y = plat.y - PH;
@@ -558,10 +626,10 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
           if (overlaps(p.x - PW / 2 - 4, p.y - 4, PW + 8, PH + 8, chip.x - 12, chip.y - 10, 24, 20)) {
             chip.got = true;
             burst(chip.x, chip.y, g.sparks, 10, "#5ee8a2");
-            const got = g.chips.filter((c) => c.got).length;
-            if (got % 4 === 0 && got > g.planesSeen * 4 && !g.plane.active) {
-              g.planesSeen = got / 4;
-              g.plane = { x: g.camX - 420, active: true };
+            const got = g.chips.filter((c) => c.got).length + g.planesSeen * 4;
+            if (got % 4 === 0 && !g.plane.active) {
+              g.plane = { x: g.camX - 420, active: true, bannerIdx: g.planesSeen };
+              g.planesSeen += 1;
             }
           }
         }
@@ -606,7 +674,7 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
           g.plane.x += 1.7;
           if (g.plane.x > g.camX + W + 480) g.plane.active = false;
         }
-        if (p.x >= FLAG_X) setPhase("won");
+        if (p.x >= g.flagX) setPhase(g.level >= MAX_LEVEL ? "won" : "stage");
       }
       if (phase === "won" && !reduced) {
         if (now - g.lastBurst > 340) {
@@ -618,7 +686,7 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
         spark.x += spark.vx; spark.y += spark.vy; spark.vy += .045; spark.vx *= .985; spark.life -= 1;
       }
       g.sparks = g.sparks.filter((spark) => spark.life > 0);
-      g.camX = Math.min(Math.max(p.x - W * .38, 0), LEVEL_W - W);
+      g.camX = Math.min(Math.max(p.x - W * .38, 0), g.levelW - W);
       drawFrame(ctx, g, now, en, phase);
       raf = requestAnimationFrame(step);
     };
@@ -635,10 +703,12 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
   const commentary = phase === "won"
     ? (en ? "The flag's owner is… Kim Dowon, of course. You collected his skill chips on the way." : "플래그의 주인은… 역시 김도원입니다. 오는 길에 그의 스킬 칩을 주웠으니까요.")
     : phase === "lost"
-      ? (en ? "The bugs got you this time. Watch the gaps and stomp from above." : "이번엔 버그들에게 졌네요. 갭을 조심하고 위에서 밟아보세요.")
+      ? (en ? "The bugs got you this time. Recharge and keep going." : "이번엔 버그들에게 졌네요. 재충전하고 계속 가보세요.")
+      : phase === "stage"
+        ? (en ? `Level ${level} clear! One heart recharged. The next map is longer and buggier.` : `레벨 ${level} 클리어! 하트가 하나 충전됩니다. 다음 맵은 더 길고 버그도 많아요.`)
       : phase === "run"
-        ? (en ? "Move: arrows·A/D. Jump: ↑·W·Space. Stomp bugs, grab skill chips, reach the flag." : "이동: 방향키·A/D. 점프: ↑·W·스페이스. 버그를 밟고, 스킬 칩을 모아 플래그까지 가세요.")
-        : (en ? "A side-scrolling run. 3 hearts, 12 skill chips, one flag — and a secret at the end." : "횡스크롤 런입니다. 하트 3개, 스킬 칩 12개, 그리고 끝의 플래그 — 비밀이 하나 있습니다.");
+        ? (en ? `Level ${level}/${MAX_LEVEL}. Move: arrows·A/D. Jump: ↑·W·Space. Stomp bugs, grab chips, tap the banner plane for links.` : `레벨 ${level}/${MAX_LEVEL}. 이동: 방향키·A/D. 점프: ↑·W·스페이스. 버그를 밟고 칩을 모으세요. 배너 비행기를 누르면 링크로 이동합니다.`)
+        : (en ? `${MAX_LEVEL} levels of side-scrolling. 3 hearts, skill chips, promo planes — and a flag at the end.` : `횡스크롤 ${MAX_LEVEL}레벨. 하트 3개, 스킬 칩, 홍보 비행기 — 그리고 끝의 플래그.`);
 
   return (
     <main id="main" className="wc-page">
@@ -646,7 +716,7 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
         <header className="wc-hud">
           {onExit && <button type="button" className="ac-back" onClick={onExit}>← {en ? "Games" : "게임 선택"}</button>}
           <span className="wc-hud-stage">{en ? "BEAR RUN" : "베어 런"}</span>
-          <span className="wc-hud-match">{en ? "REACH THE FLAG" : "플래그까지 도달"}</span>
+          <span className="wc-hud-match">{en ? `LEVEL ${level}/${MAX_LEVEL}` : `레벨 ${level}/${MAX_LEVEL}`}</span>
         </header>
         <BearBubble>{commentary}</BearBubble>
         <div className="bb-frame">
@@ -656,8 +726,17 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
               <BlueBear mood="smug" className="bb-overlay-bear" />
               <span className="wc-kicker">BEAR RUN</span>
               <h2>{en ? "Run to the flag." : "플래그까지 달려라."}</h2>
-              <p>{en ? "Move: arrows·A/D. Jump: ↑·W·Space or tap. Stomp bugs from above, collect 12 skill chips." : "이동: 방향키·A/D. 점프: ↑·W·스페이스 또는 탭. 버그는 위에서 밟고, 스킬 칩 12개를 모으세요."}</p>
+              <p>{en ? `${MAX_LEVEL} levels. Move: arrows·A/D. Jump: ↑·W·Space or tap. Stomp bugs, grab skill chips, and tap the promo plane's banner for project links.` : `${MAX_LEVEL}개 레벨. 이동: 방향키·A/D. 점프: ↑·W·스페이스 또는 탭. 버그는 밟고, 칩을 모으고, 홍보 비행기 배너를 누르면 프로젝트 링크로 이동합니다.`}</p>
               <Button type="button" onClick={startGame}>{en ? "Run" : "달리기"} <PersonSimpleRunIcon size={17} /></Button>
+            </div>
+          )}
+          {phase === "stage" && (
+            <div className="bb-overlay">
+              <BlueBear mood="happy" className="bb-overlay-bear" />
+              <span className="wc-kicker">{en ? `LEVEL ${level} CLEAR` : `레벨 ${level} 클리어`}</span>
+              <h2>{en ? "Flag captured." : "플래그 확보."}</h2>
+              <p>{en ? `+1 heart. Level ${level + 1} is longer, gaps are wider, and the bugs are faster.` : `하트 +1. 레벨 ${level + 1}은 더 길고, 갭은 넓고, 버그는 빠릅니다.`}</p>
+              <Button type="button" onClick={nextLevel}>{en ? `Level ${level + 1}` : `레벨 ${level + 1}`} <ArrowRightIcon size={17} /></Button>
             </div>
           )}
           {phase === "lost" && (
@@ -682,13 +761,13 @@ export function BearRun({ onExit }: { onExit?: () => void }) {
           {showPromo && (
             <div className="bb-overlay bb-promo">
               <BlueBear mood="smug" className="bb-overlay-bear" />
-              <span className="wc-kicker">FLAG CAPTURED</span>
+              <span className="wc-kicker">ALL LEVELS CLEARED</span>
               <h2>{en ? "The flag's owner is… Kim Dowon." : "플래그의 주인은… 김도원."}</h2>
               <p className="bb-promo-copy">
                 {en ? "Thinks about the product," : "제품을 생각하고"}<br />
                 {en ? "thinks about the business," : "기업을 생각하고"}<br />
                 {en ? "communicates brilliantly —" : "의사소통이 뛰어난"}<br />
-                <b>{en ? "Kim Dowon. Recommended. (He runs fast too.)" : "김도원 추천합니다. (달리기도 잘합니다.)"}</b>
+                <b>{en ? "Kim Dowon. Recommended." : "김도원 추천합니다."}</b>
               </p>
               <div className="bb-promo-actions">
                 <Button asChild><Link href="/work">{en ? "View projects" : "프로젝트 보기"} <ArrowRightIcon size={17} /></Link></Button>
