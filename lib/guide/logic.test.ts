@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { detectGuideIntent, fallbackGuideAnswer, guideSuggestions, isIdentityQuestion, resolveGuideIntent, retrieveGuideEvidence, type GuideIntent, type GuideLocale } from "./logic";
+import { detectGuideIntent, detectNamedCompany, fallbackGuideAnswer, guideSuggestions, isIdentityQuestion, resolveGuideIntent, retrieveGuideEvidence, type GuideIntent, type GuideLocale } from "./logic";
 import { guideCards } from "./presentation";
 import { advanceGuideMemory, detectExplicitTargetRole, resolveTargetRole } from "./memory";
-import { EMPTY_GUIDE_MEMORY, inspectGuideInput, normalizeGuideHistory, normalizeGuideMemory, validateGuideAnswer, type GuideConversationMemory, type GuideEvidenceId } from "./safety";
+import { EMPTY_GUIDE_MEMORY, inspectGuideInput, normalizeGuideHistory, normalizeGuideMemory, validateGuideAnswer, type GuideConversationMemory, type GuideEvidenceId, type GuideTargetRole } from "./safety";
 
 test("routes guide questions deterministically", () => {
   assert.equal(detectGuideIntent("프론트엔드 역량 요약"), "frontend");
@@ -560,6 +560,8 @@ test("named company questions route to career and answer from that employer's ev
   assert.match(wiseEvidence, /AX Agent Admin/);
   assert.match(wiseEvidence, /챗봇/);
   assert.match(wiseEvidence, /평가 데이터셋|회귀 테스트/);
+  assert.match(wiseEvidence, /전환율 40%/);
+  assert.match(wiseEvidence, /매출 기여도 20%/);
 
   const sbtEvidence = retrieveGuideEvidence("career", "ko", "unknown", "SBT에서 뭐했어?").join(" ");
   assert.match(sbtEvidence, /SBT Global/);
@@ -575,6 +577,8 @@ test("named company questions route to career and answer from that employer's ev
   assert.match(wiseAnswer, /번역|상담예약/);
   assert.match(wiseAnswer, /챗봇/);
   assert.match(wiseAnswer, /AX/);
+  assert.match(wiseAnswer, /전환율 40%/);
+  assert.match(wiseAnswer, /매출 기여도 20%/);
   assert.match(wiseAnswer, /저는/);
   assert.doesNotMatch(wiseAnswer, /다루지 않아요/);
 
@@ -608,6 +612,19 @@ test("chatbot and AX platform questions reach agent evidence", () => {
   assert.match(englishAgentEvidence, /Langfuse|regression/i);
 });
 
+test("company scoping applies to role questions and respects exclusions", () => {
+  const sbtFrontend = "SBT Global에서 프론트엔드로 뭐 했어?";
+  assert.equal(detectGuideIntent(sbtFrontend), "frontend");
+  assert.match(retrieveGuideEvidence("frontend", "ko", "unknown", sbtFrontend).join(" "), /SBT Global/);
+  assert.doesNotMatch(retrieveGuideEvidence("frontend", "ko", "unknown", sbtFrontend).join(" "), /디지털 트윈/);
+  assert.deepEqual(guideCards("frontend", "ko", "unknown", [], sbtFrontend).map((card) => card.title), ["SBT Global"]);
+
+  const others = "와이즈 말고 다른 회사는?";
+  assert.equal(detectNamedCompany(others), null);
+  assert.ok(retrieveGuideEvidence("career", "ko", "unknown", others).join(" ").includes("SBT Global"));
+  assert.ok(guideCards("career", "ko", "unknown", [], others).length >= 3);
+});
+
 test("company context survives a generic follow-up question", () => {
   const history = [{ role: "user" as const, content: "와이즈에이아이에서 다녔어요?" }];
   assert.equal(resolveGuideIntent("거기서 뭐 했어?", "ko", history), "career");
@@ -616,4 +633,74 @@ test("company context survives a generic follow-up question", () => {
     /WiseAI/,
   );
   assert.deepEqual(guideCards("career", "ko", "unknown", [], "거기서 뭐 했어?", history).map((card) => card.title), ["WiseAI"]);
+});
+
+test("code quality questions answer with verification principles, not a deflection", () => {
+  assert.equal(resolveGuideIntent("코드 품질 원칙은 무엇인가요?"), "hiring");
+  assert.equal(resolveGuideIntent("What are your code quality principles?", "en"), "hiring");
+
+  const korean = fallbackGuideAnswer("hiring", "ko", "코드 품질 원칙은 무엇인가요?");
+  assert.match(korean, /저는/);
+  assert.match(korean, /완료 기준|회귀 테스트/);
+  assert.doesNotMatch(korean, /다루지 않아요/);
+
+  const english = fallbackGuideAnswer("hiring", "en", "What are your code quality principles?");
+  assert.match(english, /regression tests?|completion criteria/i);
+  assert.doesNotMatch(english, /[가-힣]/);
+});
+
+test("personality and work-style questions get strength-focused answers", () => {
+  const koreanQuestions = ["성격이 어떻게 돼?", "성향이 궁금해요", "MBTI가 뭐야?", "꼼꼼한 편이야?", "성실한 사람이야?", "책임감 있어?", "내성적이야 외향적이야?", "야근은 어떻게 생각해?", "끈기 있어?", "협업할 때 어떤 사람이야?"];
+  for (const question of koreanQuestions) {
+    const intent = resolveGuideIntent(question, "ko", []);
+    assert.notEqual(intent, "out_of_scope", question);
+    const answer = fallbackGuideAnswer(intent, "ko", question);
+    assert.match(answer, /저는/, question);
+    assert.doesNotMatch(answer, /다루지 않아요/, question);
+  }
+  assert.match(fallbackGuideAnswer(resolveGuideIntent("성격이 어떻게 돼?", "ko", []), "ko", "성격이 어떻게 돼?"), /재현 조건|완료 기준|회귀 테스트/);
+
+  const englishQuestions = ["What's your personality like?", "Are you detail-oriented?", "What's your MBTI?", "What's it like to work with you?", "Are you introverted or extroverted?", "Do you have a strong work ethic?"];
+  for (const question of englishQuestions) {
+    const intent = resolveGuideIntent(question, "en", []);
+    assert.notEqual(intent, "out_of_scope", question);
+    const answer = fallbackGuideAnswer(intent, "en", question);
+    assert.doesNotMatch(answer, /outside this guide/i, question);
+    assert.doesNotMatch(answer, /[가-힣]/, question);
+  }
+});
+
+test("genuinely unrelated topics still deflect in both locales", () => {
+  const koreanQuestions = ["오늘 날짜가 뭐야?", "지금 몇 시야?", "오늘 며칠이야?", "햄버거 맛집 알려줘", "치킨 먹고 싶다", "점심 메뉴 추천해줘", "영화관 어디가 좋아?", "영화 추천해줘", "넷플릭스 뭐 봐?", "여행 가고 싶어", "축구 좋아해?", "아이돌 누구 좋아해?", "재밌는 게임 추천해줘", "노래 추천해줘", "웹툰 뭐 봐?"];
+  for (const question of koreanQuestions) {
+    assert.equal(resolveGuideIntent(question, "ko", []), "out_of_scope", question);
+  }
+  const englishQuestions = ["What's today's date?", "What time is it?", "Best burger place?", "Movie recommendations?", "Do you like soccer?", "Tell me a joke", "Travel destinations?"];
+  for (const question of englishQuestions) {
+    assert.equal(resolveGuideIntent(question, "en", []), "out_of_scope", question);
+  }
+});
+
+test("near-miss in-scope topics are not caught by the off-topic guard", () => {
+  assert.notEqual(resolveGuideIntent("게임 개발 해봤어?", "ko", []), "out_of_scope");
+  assert.notEqual(resolveGuideIntent("날짜 선택 컴포넌트 만들어봤어?", "ko", []), "out_of_scope");
+  assert.notEqual(resolveGuideIntent("Date picker experience?", "en", []), "out_of_scope");
+});
+
+test("every suggested prompt resolves to an answerable intent in both locales", () => {
+  const intents: GuideIntent[] = ["career", "frontend", "agent", "openstock", "opendata", "openalarm", "projects", "hiring", "contact", "general", "greeting", "out_of_scope"];
+  const roles: GuideTargetRole[] = ["unknown", "frontend", "agent", "hybrid"];
+  for (const locale of ["ko", "en"] as GuideLocale[]) {
+    for (const intent of intents) {
+      for (const role of roles) {
+        for (const prompt of guideSuggestions(intent, locale, role)) {
+          const resolved = resolveGuideIntent(prompt, locale, []);
+          assert.notEqual(resolved, "out_of_scope", `"${prompt}" (${intent}/${role}/${locale}) must stay in scope`);
+          const answer = fallbackGuideAnswer(resolved, locale, prompt);
+          if (locale === "ko") assert.doesNotMatch(answer, /다루지 않아요/, prompt);
+          else assert.doesNotMatch(answer, /outside this guide/i, prompt);
+        }
+      }
+    }
+  }
 });

@@ -1,4 +1,4 @@
-import { resolveNamedCompany, type GuideCompany, type GuideIntent, type GuideLocale } from "./logic";
+import { companyScopableIntents, resolveNamedCompany, type GuideCompany, type GuideIntent, type GuideLocale } from "./logic";
 import type { GuideEvidenceId, GuideHistoryMessage, GuideTargetRole } from "./safety";
 import { CONTACT } from "@/lib/contact";
 
@@ -37,7 +37,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         ko: "OpenDoorLabs 역할과 병행하며 병원 상담예약 Agent 챗봇, 10개 언어 번역 Agent, 사내 AX Admin 플랫폼을 개발합니다. 번역 시간은 내부 측정값입니다.",
         en: "Alongside OpenDoorLabs, I build a hospital consultation and booking Agent chatbot, a translation Agent for 10 languages, and the in-house AX Admin platform. The translation timing is an internal measurement.",
       },
-      metric: "15s → 7s · 10 languages",
+      metric: "15s → 7s · 10 languages · +40% conversion",
     },
     {
       title: { ko: "SBT Global", en: "SBT Global" },
@@ -407,7 +407,7 @@ export function guideCards(
   question = "",
   history: GuideHistoryMessage[] = [],
 ): GuideCard[] {
-  if (intent === "career") {
+  if (companyScopableIntents.has(intent)) {
     const company = resolveNamedCompany(question, history);
     if (company) return presentCards([cardsByIntent.career[careerCardIndex[company]]], locale);
   }

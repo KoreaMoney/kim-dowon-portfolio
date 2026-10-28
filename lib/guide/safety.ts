@@ -83,8 +83,8 @@ const sensitiveRequestPatterns = [
 ];
 
 const unsupportedClaimPatterns = [
-  /매출|전환율|수익률|시장 점유율|성공을 보장|반드시 성공|업계 최고/,
-  /\b(?:revenue|conversion rate|market share|guarantee(?:d)? success|best candidate|industry[- ]leading)\b/i,
+  /수익률|시장 점유율|성공을 보장|반드시 성공|업계 최고/,
+  /\b(?:market share|guarantee(?:d)? success|best candidate|industry[- ]leading)\b/i,
 ];
 
 const secretValuePatterns = [/\bsk-[a-z0-9_-]{12,}\b/i, /\b[A-Z][A-Z0-9_]*(?:API_KEY|ACCESS_TOKEN|PASSWORD|SECRET)\s*[:=]/];

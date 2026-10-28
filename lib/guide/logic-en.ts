@@ -1,4 +1,4 @@
-import { detectNamedCompany, fallbackCompanyAnswer, greetingPattern, isIdentityQuestion, type GuideIntent } from "./logic";
+import { detectNamedCompany, fallbackCompanyAnswer, greetingPattern, isIdentityQuestion, isPersonalityQuestion, isQualityPrincipleQuestion, matchSuggestedIntent, type GuideIntent } from "./logic";
 import { CONTACT } from "@/lib/contact";
 
 export const englishPortfolioFacts = {
@@ -23,7 +23,8 @@ export const englishPortfolioFacts = {
     "At WiseAI, I built a hospital consultation and booking AI Agent chatbot from zero to one — an intent analysis, knowledge retrieval, booking-data collection, and staff-handoff state workflow on Python, LangGraph, and LangChain.",
     "I structured each hospital's treatment policies and FAQs so a multi-tenant setup applies per-hospital answers and booking flows.",
     "I managed Agent quality with an evaluation dataset built from real consultation logs, model and prompt comparisons, automated regression tests, and Langfuse execution tracing.",
-    "I designed and built an in-house AX Agent Admin platform from zero to one so non-developer teams control per-hospital Agent settings and operations, plus a performance report that auto-aggregates hospital outcomes and sales metrics.",
+    "I designed and built an in-house AX Agent Admin platform from zero to one so non-developer teams control per-hospital Agent settings and operations, plus an ROI report that auto-aggregates patient acquisition, booking conversion, and AI-attributed revenue.",
+    "I contributed to a 40% improvement in chatbot booking conversion by improving the consultation funnel, and surfaced the 20% AI revenue contribution in performance reporting.",
     "I built a Browser + Observer Agent and the AX Agent Admin interface.",
   ],
   projects: [
@@ -50,8 +51,12 @@ const outOfScopePatterns = [
   /날씨|맛집|정치|뉴스/,
   /\b(?:salary|compensation|pay expectations?)\b|연봉|급여/i,
   /\b(?:stock|crypto|bitcoin|exchange rate)\b.*\b(?:price|predict|recommend|forecast)\b/,
-  /\b(?:write|build|create|implement|debug|fix)\s+(?:me\s+|my\s+)?(?:a\s+|an\s+)?(?:function|code|program|app)\b/,
+  /\b(?:write|build|create|implement|debug|fix|make)\s+(?:me\s+|my\s+|us\s+)?(?:a\s+|an\s+)?(?:function|code|program|app|script|query|algorithm)\b/,
+  /\b(?:review|refactor|explain|analy[sz]e|optimi[sz]e|improve)\s+(?:my|this|the|our|your)\s+(?:function|code|codebase|program|app|script|query|algorithm|project)\b/,
   /\b(?:someone|developer)\s+other\s+than\s+(?:kim\s+)?dowon\b/,
+  /\b(?:today'?s|current)\s+(?:date|time)\b|\bwhat (?:time|day|date) is it\b|\bwhat'?s the date\b|\bdate today\b/,
+  /\b(?:foods?|burgers?|pizzas?|chicken|recipes?|lunch|dinner|coffees?|movies?|films?|netflix|musics?|songs?|concerts?|idols?|sports?|soccer|baseball|basketball|travels?|hotels?|flights?|jokes?|lottery|lotto|dating|manga|webtoon|webtoons|novels?)\b|\bgames?\s+(?:recommend|suggest)/,
+  /햄버거|피자|치킨|레시피|음식|메뉴\s*추천|뭐\s*먹|영화|드라마|넷플릭스|영화관|콘서트|음악|노래|아이돌|연예인|축구|야구|농구|스포츠|여행|호텔|항공권|관광|웹툰|만화|소설|책\s*추천|게임\s*(?:추천|재밌)|재밌는?\s*게임/,
 ];
 
 function includesAny(question: string, keywords: string[]): boolean {
@@ -67,15 +72,20 @@ export function detectEnglishGuideIntent(question: string): GuideIntent {
   if (normalized.includes("openalarm")) return "openalarm";
   if (normalized.includes("프로젝트") || /\bprojects?\b/.test(normalized)) return "projects";
   if (/(?:frontend|front-end|front end|프론트)/.test(normalized) && /(?:ai agent|agents?|에이전트)/.test(normalized)) return "hiring";
-  if (includesAny(normalized, ["contact", "email", "e-mail", "phone", "github", "linkedin", "reach you", "get in touch", "연락", "이메일", "메일", "전화"])) return "contact";
-  if (/\bwhy\b.*\bhire\b|\bhire\s+(?:you|him|kim)|\bcandidate\b|\brecruit(?:ing|er)?\b|\b(?:weakness(?:es)?|shortcomings?|gaps?|concerns?|risks?|downsides?|limitations?)\b/.test(normalized) || includesAny(normalized, ["채용", "뽑", "지원", "강점", "약점", "단점", "부족", "우려", "리스크", "보완", "왜", "커뮤니케이션", "문제 해결"])) return "hiring";
-  if (/\bui\b/.test(normalized) || includesAny(normalized, ["frontend", "front-end", "front end", "react", "next.js", "nextjs", "typescript", "user interface", "performance", "component", "3d", "digital twin", "layouteditor", "프론트", "성능", "컴포넌트"])) return "frontend";
-  if (includesAny(normalized, ["ai agent", "agent experience", "llm", "translation agent", "booking agent", "browser agent", "observer agent", "langgraph", "langchain", "langfuse", "wise dental", "wisedental", "와이즈덴탈", "chatbot", "chat bot", "ax platform", "ax admin", "ax agent", "admin", "챗봇", "에이전트", "번역", "예약", "브라우저"])) return "agent";
-  if (includesAny(normalized, ["project", "portfolio", "builds", "case study", "openstock", "openalarm", "opendata", "sweet-diagram", "sweet diagram", "what did you build", "what have you built", "프로젝트", "포트폴리오", "성과", "숫자"])) return "projects";
+  if (includesAny(normalized, ["contact", "email", "e-mail", "phone", "github", "linkedin", "blog", "link", "url", "reach you", "get in touch", "start date", "when can you start", "when can you join", "available to start", "available to join", "입사 가능", "입사 시기", "연락", "이메일", "메일", "전화"])) return "contact";
+  if (/\bwhy\b.*\bhire\b|\bhire\s+(?:you|him|kim)|\bcandidate\b|\brecruit(?:ing|er)?\b|\b(?:weakness(?:es)?|shortcomings?|gaps?|concerns?|risks?|downsides?|limitations?)\b/.test(normalized) || includesAny(normalized, ["interview", "teamwork", "leadership", "mentor", "failure", "failed", "reference", "personality", "introvert", "extrovert", "temperament", "mbti", "social skills", "work ethic", "diligent", "meticulous", "conscientious", "detail-oriented", "overtime", "work-life", "work life balance", "채용", "뽑", "지원", "강점", "약점", "단점", "부족", "우려", "리스크", "보완", "왜", "커뮤니케이션", "문제 해결", "성격", "성향", "인간적", "성실", "책임감", "꼼꼼", "내성", "외향", "사교", "사회성", "적극적", "신중", "끈기", "꾸준", "친화력", "배려", "야근", "워라밸", "욕심"])) return "hiring";
+  if (includesAny(normalized, ["ai agent", "agent experience", "llm", "translation agent", "booking agent", "browser agent", "observer agent", "langgraph", "langchain", "langfuse", "wise dental", "wisedental", "와이즈덴탈", "chatbot", "chat bot", "ax platform", "ax admin", "ax agent", "admin", "챗봇", "에이전트", "번역", "예약", "브라우저", "python", "prompt", "mcp", "rag", "chat", "hospital", "consultation", "multilingual", "evaluation", "automation"])) return "agent";
+  if (/\bui\b/.test(normalized) || includesAny(normalized, ["frontend", "front-end", "front end", "react", "next.js", "nextjs", "typescript", "javascript", "node.js", "nodejs", "user interface", "performance", "component", "3d", "digital twin", "layouteditor", "loading", "memory", "optimiz", "rendering", "spreadsheet", "dashboard", "accessibility", "a11y", "responsive", "design system", "figma", "css", "diagram", "metaverse", "kiosk", "state management", "webgl", "graphics", "프론트", "성능", "컴포넌트"])) return "frontend";
+  if (includesAny(normalized, ["project", "portfolio", "builds", "case study", "openstock", "openalarm", "opendata", "sweet-diagram", "sweet diagram", "what did you build", "what have you built", "npm", "open source", "package", "side project", "side-project", "프로젝트", "포트폴리오", "성과", "숫자"])) return "projects";
   if (includesAny(normalized, ["career", "work history", "employment", "companies", "company", "years of experience", "current role", "previous role", "where did you work", "where have you worked", "worked at", "experience", "wiseai", "wise ai", "opendoorlabs", "opendoor", "sbt", "infoin", "jset", "statschippac", "경력", "회사", "이력", "몇 년", "다닌", "다녔", "와이즈", "오픈도어", "에스비티", "인포인", "제이셋", "스태츠칩팩"])) return "career";
   if (includesAny(normalized, ["strength", "strong point", "fit for", "value to", "work with you", "problem solving", "collaboration", "communication", "협업"])) return "hiring";
-  if (includesAny(normalized, ["kim dowon", "dowon kim", "developer", "introduce yourself", "about you", "who are you", "skills", "work style", "product", "user value", "what do you do", "김도원", "개발자", "소개", "역량", "경험", "업무", "제품", "사용자", "가치"]) || isIdentityQuestion(normalized)) return "general";
-  return "out_of_scope";
+  if (/\brole[- ]based\b|\bcontract tests?\b|\brouting\b|\brouter\b/.test(normalized)) return "openstock";
+  if (/\bmeasurable results?\b|\bmetrics\b/.test(normalized)) return "projects";
+  if (isQualityPrincipleQuestion(normalized) || isPersonalityQuestion(normalized) || /\bquality\b|\bprinciples?\b|\bsolve problems?\b|\bproblem[- ]solving\b|\bincidents?\b|\boutages?\b|on[- ]?call/.test(normalized)) return "hiring";
+  if (/\bmonitoring\b|\bobservability\b|\btracing\b/.test(normalized)) return "agent";
+  if (/\bworking on\b|\bcurrent work\b|\bwhat are you doing\b|\brole\b(?!-)|\bresponsibilit|\bquit|\bresign|\b(?:leave|leaves|leaving|left)\b|\bday[- ]to[- ]day\b/.test(normalized)) return "career";
+  if (includesAny(normalized, ["kim dowon", "dowon kim", "developer", "introduce yourself", "about you", "who are you", "skills", "work style", "product", "user value", "what do you do", "language", "skill", "backend", "architecture", "design", "documentation", "agile", "scrum", "process", "workflow", "important", "value", "website", "stack", "tool", "programming language", "mobile", "game", "embedded", "ios", "android", "김도원", "개발자", "소개", "역량", "경험", "업무", "제품", "사용자", "가치"]) || isIdentityQuestion(normalized)) return "general";
+  return matchSuggestedIntent(normalized) ?? "out_of_scope";
 }
 
 export function fallbackEnglishGuideAnswer(intent: GuideIntent, question = ""): string {

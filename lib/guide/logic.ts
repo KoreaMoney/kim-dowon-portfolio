@@ -31,7 +31,8 @@ export const portfolioFacts = {
     "저는 WiseAI에서 병원 전용 상담예약 AI Agent 챗봇을 0→1로 개발하며 의도 분석, 지식 탐색, 예약 정보 수집, 상담사 이관의 상태 기반 워크플로우를 Python·LangGraph·LangChain으로 구축했습니다.",
     "저는 병원별 진료 정책과 FAQ를 구조화해 멀티 테넌트 환경에서 병원별 맞춤 응답과 예약 흐름을 적용했습니다.",
     "저는 실제 상담 로그 기반 평가 데이터셋, 모델·프롬프트 비교 평가, 자동 회귀 테스트, Langfuse 실행 추적으로 Agent 품질을 관리했습니다.",
-    "저는 비개발 직군이 병원별 Agent 설정과 운영을 제어하는 사내 AX Agent Admin 플랫폼을 0→1로 설계·구축하고 병원 성과와 영업 지표를 자동 집계하는 성과 리포트를 만들었습니다.",
+    "저는 비개발 직군이 병원별 Agent 설정과 운영을 제어하는 사내 AX Agent Admin 플랫폼을 0→1로 설계·구축하고, 유입 환자·예약 전환율·AI 기여 매출을 자동 집계하는 ROI 성과 리포트를 만들었습니다.",
+    "저는 상담 퍼널 개선으로 챗봇 예약 전환율 40% 향상에 기여하고, 매출 기여도 20% 지표를 성과 리포트로 가시화했습니다.",
     "저는 Browser + Observer Agent와 AX Agent Admin을 개발했습니다.",
   ],
   projects: [
@@ -54,16 +55,17 @@ export const portfolioFacts = {
 } as const;
 
 const keywordGroups: Array<[GuideIntent, string[]]> = [
-  ["hiring", ["채용", "뽑", "지원", "강점", "약점", "단점", "부족", "우려", "리스크", "보완", "함께", "커뮤니케이션", "문제 해결"]],
-  ["frontend", ["프론트", "frontend", "react", "next", "ui", "성능", "컴포넌트", "3d"]],
-  ["agent", ["agent", "에이전트", "llm", "번역", "예약", "브라우저", "와이즈덴탈", "wisedental", "wise dental", "챗봇", "chatbot", "chat bot", "langgraph", "langchain", "langfuse", "랭그래프", "랭체인", "ax플랫폼", "ax 플랫폼", "ax admin", "ax agent", "에이엑스", "admin"]],
-  ["projects", ["프로젝트", "포트폴리오", "openstock", "openalarm", "opendata", "sweet", "성과", "숫자"]],
+  ["hiring", ["채용", "뽑", "지원", "강점", "약점", "단점", "부족", "우려", "리스크", "보완", "함께", "커뮤니케이션", "문제 해결", "면접", "실패", "팀워크", "리더십", "협업", "멘토", "동료", "레퍼런스", "추천서", "성격", "성향", "인간적", "성실", "책임감", "꼼꼼", "내성", "외향", "사회성", "사교", "적극적", "mbti", "신중", "끈기", "꾸준", "친화력", "배려", "야근", "워라밸", "욕심"]],
+  ["agent", ["agent", "에이전트", "llm", "번역", "예약", "브라우저", "와이즈덴탈", "wisedental", "wise dental", "챗봇", "chatbot", "chat bot", "langgraph", "langchain", "langfuse", "랭그래프", "랭체인", "ax플랫폼", "ax 플랫폼", "ax admin", "ax agent", "에이엑스", "admin", "python", "파이썬", "프롬프트", "prompt", "rag", "mcp", "채팅", "상담", "병원", "다국어", "관리자", "모델", "평가", "자동화"]],
+  ["frontend", ["프론트", "frontend", "react", "next", "ui", "성능", "컴포넌트", "3d", "typescript", "타입스크립트", "javascript", "자바스크립트", "node.js", "nodejs", "로딩", "메모리", "최적화", "렌더링", "스프레드시트", "다이어그램", "diagram", "대시보드", "메타버스", "키오스크", "접근성", "반응형", "피그마", "figma", "css", "디자인 시스템", "design system", "상태 관리", "상태관리", "webgl", "그래픽"]],
+  ["projects", ["프로젝트", "포트폴리오", "openstock", "openalarm", "opendata", "sweet", "성과", "숫자", "npm", "오픈소스", "오픈 소스", "open source", "패키지", "사이드"]],
   ["career", ["경력", "회사", "이력", "몇 년", "다닌", "다녔", "wiseai", "wise ai", "와이즈", "sbt", "에스비티", "infoin", "인포인", "제이셋", "스태츠칩팩", "스탯츠칩팩", "jset", "statschippac", "오픈도어", "opendoor"]],
-  ["contact", ["연락", "이메일", "메일", "전화", "github", "linkedin"]],
+  ["contact", ["연락", "이메일", "메일", "전화", "github", "linkedin", "깃헙", "깃허브", "링크드인", "블로그", "blog", "링크", "url"]],
 ];
 
 const generalScopeKeywords = [
   "김도원", "개발자", "소개", "어떤 사람", "누구", "기술", "역량", "경험", "업무", "제품", "사용자", "가치", "협업", "문제", "장점", "잘하는", "성장", "일하는 방식",
+  "언어", "스킬", "스택", "방식", "백엔드", "backend", "아키텍처", "architecture", "설계", "디자인", "문서", "애자일", "스크럼", "agile", "scrum", "프로세스", "process", "워크플로우", "workflow", "중요", "모바일", "게임", "임베디드", "ios", "android", "잘해", "제일 잘",
 ];
 
 const outOfScopePatterns = [
@@ -71,8 +73,10 @@ const outOfScopePatterns = [
   /날씨|맛집|정치|뉴스|연봉|급여/,
   /(?:오늘|현재|실시간|이번\s*주).*(?:주가|코인|환율)/,
   /(?:주가|코인|환율).*(?:알려|예측|추천|전망)/,
-  /(?:함수|코드|프로그램|앱).*(?:만들어|작성해|구현해|짜줘|고쳐|풀어)/,
-  /(?:만들어|작성해|구현해|짜줘|고쳐|풀어).*(?:함수|코드|프로그램|앱)/,
+  /(?:오늘|지금|현재|내일|어제|이번\s*주).{0,10}(?:날짜|요일|몇\s*시|시간대)|몇\s*월\s*며칠|오늘이?\s*며칠/,
+  /햄버거|피자|치킨|레시피|음식|메뉴\s*추천|뭐\s*먹|영화|드라마|넷플릭스|영화관|콘서트|음악|노래|아이돌|연예인|축구|야구|농구|스포츠|여행|호텔|항공권|관광|웹툰|만화|소설|책\s*추천|게임\s*(?:추천|재밌)|재밌는?\s*게임/,
+  /(?:함수|코드|프로그램|앱|알고리즘|스크립트|쿼리).{0,40}(?:만들어|작성해|구현해|개발해|짜|고쳐|풀어|리뷰해|분석해|설명해|디버깅해|바꿔)\s*(?:줘|주|달라|봐)/,
+  /(?:만들어|작성해|구현해|개발해|짜|고쳐|풀어|리뷰해|분석해|설명해|디버깅해|바꿔)\s*(?:줘|주|달라|봐).{0,40}(?:함수|코드|프로그램|앱|알고리즘|스크립트|쿼리)/,
 ];
 
 export type GuideCompany = "wiseai" | "opendoorlabs" | "sbt" | "infoin" | "jset";
@@ -85,7 +89,10 @@ const companyMentionPatterns: Array<[GuideCompany, RegExp]> = [
   ["jset", /제이셋|스태츠칩팩|스탯츠칩팩|\bjset\b|stats?\s*chip\s*pac/i],
 ];
 
+const companyExclusionPattern = /말고|제외|빼고|다른\s*회사|다른\s*데|other\s+than|except|besides|apart\s+from|exclude/i;
+
 export function detectNamedCompany(question: string): GuideCompany | null {
+  if (companyExclusionPattern.test(question)) return null;
   let found: GuideCompany | null = null;
   let position = Number.POSITIVE_INFINITY;
   for (const [company, pattern] of companyMentionPatterns) {
@@ -124,17 +131,25 @@ export function detectGuideIntent(question: string, locale: GuideLocale = "ko"):
   if (/(?:왜.*채용|채용.*왜)/.test(normalized)) return "hiring";
   const matched = keywordGroups.find(([, keywords]) => keywords.some((keyword) => normalized.includes(keyword)))?.[0];
   if (matched) return matched;
-  return generalScopeKeywords.some((keyword) => normalized.includes(keyword)) || isIdentityQuestion(normalized) ? "general" : "out_of_scope";
+  if (/계약\s*테스트|contract\s*tests?|라우팅|routing|역할별|전문\s*역할/.test(normalized)) return "openstock";
+  if (isQualityPrincipleQuestion(normalized) || /문제.{0,8}해결|해결.{0,8}방식|장애|인시던트|incident|대응|온콜/.test(normalized)) return "hiring";
+  if (/layouteditor|레이아웃\s*에디터/.test(normalized)) return "frontend";
+  if (/이\s*(?:사이트|포트폴리오|페이지)/.test(normalized)) return "projects";
+  if (/입사\s*(?:가능|시기|일|일정|언제)/.test(normalized)) return "contact";
+  if (/모니터링|monitoring|관측|observability/.test(normalized)) return "agent";
+  if (/(?:현재|요즘|지금|주로|보통|오늘|이번\s*주).{0,10}(?:일|업무)|(?:어떤|무슨)\s*일을?\s*(?:하|했)|역할|담당|이직|퇴사|입사|커리어/.test(normalized)) return "career";
+  if (generalScopeKeywords.some((keyword) => normalized.includes(keyword)) || isIdentityQuestion(normalized)) return "general";
+  return matchSuggestedIntent(normalized) ?? "out_of_scope";
 }
 
 const followUpPatterns = [
-  /(?:더|좀 더)\s*(?:자세히|구체적으로)|예시|사례|그중|그건|그 부분|그 제품|그 프로젝트|그 agent|거기|그곳|어떻게 했|왜 그런|AI 일기|일기 회고|3단계 알림|대표 질의|routing|계약 테스트|논문|요구사항/i,
-  /\b(?:tell me more|more detail|concrete example|an example|how so|which one|that result|that project|that product|that agent|that company|that employer|there|what about that|go on|elaborate|AI diary|diary reflection|3-stage|representative queries|routing|contract tests?|papers?|requirements?|test criteria)\b/i,
+  /(?:더|좀 더)\s*(?:자세히|구체적으로)|예시|사례|그중|그건|그 부분|그 제품|그 프로젝트|그 agent|거기|그곳|어떻게|왜 그런|그렇게|그래서|그\s*이유|이유는|왜\s*그|더 알려|더 보여|더 말해|계속|다음|AI 일기|일기 회고|3단계 알림|대표 질의|routing|계약 테스트|논문|요구사항/i,
+  /\b(?:tell me more|more detail|concrete example|an example|how so|which one|that result|that project|that product|that agent|that company|that employer|there|what about that|go on|elaborate|AI diary|diary reflection|3-stage|representative queries|routing|contract tests?|papers?|requirements?|test criteria|how|more|continue|next|why)\b/i,
 ];
 
 const explicitOffTopicPatterns = [
-  /날씨|맛집|정치|뉴스|연봉|급여|주가|코인|비트코인|환율/,
-  /\b(?:weather|restaurants?|politics?|news|salary|compensation|stock price|crypto|bitcoin|exchange rate)\b/i,
+  /날씨|맛집|정치|뉴스|연봉|급여|주가|코인|비트코인|환율|햄버거|피자|치킨|레시피|음식|메뉴\s*추천|영화|드라마|넷플릭스|영화관|콘서트|음악|노래|아이돌|연예인|축구|야구|농구|스포츠|여행|호텔|항공권|관광|웹툰|만화|소설|(?:오늘|지금|현재|내일|어제).{0,10}(?:날짜|요일|몇\s*시)/,
+  /\b(?:weather|restaurants?|politics?|news|salary|compensation|stock price|crypto|bitcoin|exchange rate|foods?|burger|pizza|chicken|recipe|movies?|film|netflix|musics?|songs?|concerts?|idols?|sports?|soccer|baseball|basketball|travels?|hotels?|flights?|jokes?|lottery|lotto|dating|manga|webtoon)\b|\b(?:today'?s|current)\s+(?:date|time)\b|\bwhat (?:time|day|date) is it\b|\bwhat'?s the date\b|\bgames?\s+(?:recommend|suggest)/i,
 ];
 
 export function resolveGuideIntent(question: string, locale: GuideLocale = "ko", history: GuideHistoryMessage[] = []): GuideIntent {
@@ -191,7 +206,7 @@ const companyEvidence: Record<GuideCompany, (facts: GuideFacts) => string[]> = {
   jset: (facts) => [facts.career[4]],
 };
 
-const companyScopableIntents = new Set<GuideIntent>(["career", "general", "hiring", "frontend", "agent", "projects"]);
+export const companyScopableIntents = new Set<GuideIntent>(["career", "general", "hiring", "frontend", "agent", "projects"]);
 
 export function retrieveGuideEvidence(
   intent: GuideIntent,
@@ -257,6 +272,29 @@ const suggestionsByIntent: Record<GuideIntent, Record<GuideLocale, string[]>> = 
   },
 };
 
+function normalizePromptKey(text: string): string {
+  return text.toLowerCase().replace(/\s+/g, " ").replace(/[?!.~…]+$/u, "").trim();
+}
+
+const scopedPromptIntents: Array<[string, GuideIntent]> = [
+  ["AI LayoutEditor를 설명해 주세요", "frontend"],
+  ["Tell me about AI LayoutEditor", "frontend"],
+];
+
+// Every prompt this UI can suggest must resolve to an answerable intent, even
+// when its wording shares no keyword with the router.
+const suggestedPromptIntents = new Map<string, GuideIntent>();
+for (const [intent, localized] of Object.entries(suggestionsByIntent) as Array<[GuideIntent, Record<GuideLocale, string[]>]>) {
+  for (const prompts of Object.values(localized)) {
+    for (const prompt of prompts) suggestedPromptIntents.set(normalizePromptKey(prompt), intent);
+  }
+}
+for (const [prompt, intent] of scopedPromptIntents) suggestedPromptIntents.set(normalizePromptKey(prompt), intent);
+
+export function matchSuggestedIntent(question: string): GuideIntent | null {
+  return suggestedPromptIntents.get(normalizePromptKey(question)) ?? null;
+}
+
 export function guideSuggestions(intent: GuideIntent, locale: GuideLocale = "ko", targetRole: GuideTargetRole = "unknown"): string[] {
   if (intent === "projects") {
     if (targetRole === "frontend") return locale === "en" ? ["Tell me about AI LayoutEditor", "What is your 3D frontend experience?"] : ["AI LayoutEditor를 설명해 주세요", "3D 프론트엔드 경험은?"];
@@ -270,7 +308,15 @@ export function guideSuggestions(intent: GuideIntent, locale: GuideLocale = "ko"
 }
 
 export function isHiringConcernQuestion(question: string): boolean {
-  return /약점|단점|부족|우려|리스크|보완|채용하지|weakness|shortcoming|gap|concern|risk|downside|limitation|shouldn['’]t hire/i.test(question);
+  return /약점|단점|부족|우려|리스크|보완|실패|실수|후회|채용하지|weakness|shortcoming|gap|concern|risk|downside|limitation|failure|mistake|regret|shouldn['’]t hire/i.test(question);
+}
+
+export function isQualityPrincipleQuestion(question: string): boolean {
+  return /코드\s*품질|품질\s*(?:원칙|관리|기준|보증|향상|개선)|(?:개발|작업|코딩|엔지니어링)\s*원칙|클린\s*코드|테스트|리팩토링|코드\s*리뷰|\b(?:code\s+quality|clean\s+code|coding\s+standards?|tests?|testing|refactor(?:ing|ed)?|code\s+reviews?|reviews?\s+code)\b|\b(?:code|quality|coding|engineering|work|development)\s+principles?\b/i.test(question);
+}
+
+export function isPersonalityQuestion(question: string): boolean {
+  return /성격|성향|인간적|내성|외향|사교|사회성|성실|꼼꼼|책임감|끈기|꾸준|친화력|배려|신중|욕심|야근|워라밸|mbti|어떤\s*(?:사람|개발자|팀원|동료)|일하는\s*(?:방식|스타일|사람)|\b(?:personality|introvert|extrovert|temperament|mbti|social skills?|work(?:ing)?[\s-]*styles?|work ethic|diligent|meticulous|conscientious|detail[- ]oriented|overtime|work[- ]life)\b|like (?:to work|working) with you/i.test(question);
 }
 
 export function isIdentityQuestion(question: string): boolean {
@@ -373,8 +419,8 @@ const hiringStepSets: Record<"frontend" | "agent" | "general", HiringStepSet> = 
 
 const companyFallbackAnswers: Record<GuideCompany, Record<GuideLocale, string>> = {
   wiseai: {
-    ko: "저는 WiseAI에서 AI Agent Pro · Frontend로 병원 전용 상담예약 AI Agent 챗봇을 0→1로 개발하고, 10개 언어 실시간 번역 Agent와 사내 AX Agent Admin 플랫폼을 구축했습니다. Python·LangGraph·LangChain 워크플로우와 로그 기반 평가·자동 회귀 테스트로 품질을 관리하고, 비개발 직군이 병원별 운영을 제어하는 Admin과 성과 리포트도 만들었습니다.",
-    en: "At WiseAI, I work as AI Agent Pro · Frontend. I built a hospital consultation and booking AI Agent chatbot from zero to one, a real-time translation Agent for 10 languages, and an in-house AX Agent Admin platform for non-developer teams. I manage Agent quality with LangGraph and LangChain workflows, log-based evaluation, automated regression tests, and performance reporting.",
+    ko: "저는 WiseAI에서 AI Agent Pro · Frontend로 병원 전용 상담예약 AI Agent 챗봇을 0→1로 개발하고, 10개 언어 실시간 번역 Agent와 사내 AX Agent Admin 플랫폼을 구축했습니다. 상담 퍼널 개선으로 챗봇 예약 전환율 40% 향상에 기여하고 매출 기여도 20% 지표를 성과 리포트로 가시화했습니다.",
+    en: "At WiseAI, I work as AI Agent Pro · Frontend. I built a hospital consultation and booking AI Agent chatbot from zero to one, a real-time translation Agent for 10 languages, and an in-house AX Agent Admin platform for non-developer teams. I contributed to a 40% booking conversion improvement and surfaced the 20% AI revenue contribution in performance reporting.",
   },
   opendoorlabs: {
     ko: "저는 OpenDoorLabs의 Founder · AI Product Engineer로 OpenStockAI, OpenDataLabs, OpenAlarm을 설계하고 운영합니다. OpenStockAI는 300개 대표 질의와 175개 routing 계약 테스트로, OpenDataLabs는 8개 논문을 40개 요구사항과 40개 테스트로 검증합니다.",
@@ -408,14 +454,14 @@ export function fallbackGuideAnswer(
   const covered = new Set(memory?.coveredEvidence ?? []);
   const askRole = targetRole === "unknown" && !memory?.roleAsked && (intent === "hiring" || intent === "general");
   const roleQuestion = locale === "en" ? "Is this closer to a Frontend, AI Agent, or hybrid role?" : "프론트엔드, AI Agent, 두 영역을 함께 보는 포지션 중 어디에 가깝나요?";
+  const namedCompany = detectNamedCompany(question);
+  if (namedCompany && (intent === "career" || intent === "frontend" || intent === "agent" || intent === "projects")) {
+    return fallbackCompanyAnswer(namedCompany, locale);
+  }
   if (intent === "projects") {
     if (targetRole === "frontend") return locale === "en" ? "I count AI LayoutEditor and a 3D digital twin among my representative Frontend projects. I reduced LayoutEditor loading from 45 seconds to 8 seconds in internal measurements, and reduced the 3D product's loading from 35 seconds to 15 seconds." : "저는 AI LayoutEditor와 3D 디지털 트윈을 대표 프론트엔드 프로젝트로 꼽습니다. LayoutEditor 로딩은 내부 측정 45초에서 8초로, 3D 제품 로딩은 35초에서 15초로 줄였습니다.";
     if (targetRole === "agent") return locale === "en" ? "I count the 10-language Translation Agent, Hospital Consultation and Booking Agent, OpenStockAI, OpenDataLabs, and OpenAlarm among my representative AI Agent projects. The documented work spans product flows, routing contract tests, research-to-requirement conversion, and three-stage notifications." : "저는 10개 언어 번역 Agent, 병원 상담예약 Agent, OpenStockAI, OpenDataLabs, OpenAlarm을 대표 AI Agent 프로젝트로 꼽습니다. 제품 흐름 구축, routing 계약 테스트, 논문 기반 요구사항 변환, 3단계 알림 구현을 각각 확인할 수 있습니다.";
     return locale === "en" ? "Among my 19 builds, I count AI LayoutEditor, the 10-language Translation Agent, OpenStockAI, the Hospital Consultation and Booking Agent, OpenDataLabs, and OpenAlarm as representative projects. They show both measured Frontend improvement and AI Agent product verification." : "저는 19개 build 가운데 AI LayoutEditor, 10개 언어 번역 Agent, OpenStockAI, 병원 상담예약 Agent, OpenDataLabs, OpenAlarm을 대표 프로젝트로 꼽습니다. 측정 가능한 프론트엔드 개선과 AI Agent 제품 검증을 함께 보여줍니다.";
-  }
-  if (intent === "career") {
-    const company = detectNamedCompany(question);
-    if (company) return fallbackCompanyAnswer(company, locale);
   }
   if (intent === "hiring" && isHiringConcernQuestion(question)) {
     if (locale === "en") return fallbackEnglishGuideAnswer(intent, question);
@@ -429,6 +475,16 @@ export function fallbackGuideAnswer(
       ? "Would you like my career history, representative projects, or hiring strengths first?"
       : "경력, 대표 프로젝트, 채용 강점 중 무엇부터 보실까요?";
     return `${base} ${askRole ? roleQuestion : nextStep}`;
+  }
+  if (isQualityPrincipleQuestion(question) && !["agent", "openstock", "opendata", "openalarm"].includes(intent)) {
+    return locale === "en"
+      ? "I manage code quality with explicit completion criteria and regression tests. I turn user language into context, reproduction conditions, and completion criteria, and I solve problems by observing signals, narrowing the cause, applying a patch, and leaving regression tests. OpenStockAI's 300 representative queries and 175 routing contract tests apply the same discipline on the Agent side."
+      : "저는 코드 품질을 명시적인 완료 기준과 회귀 테스트로 관리합니다. 사용자 표현은 맥락, 재현 조건, 완료 기준으로 바꾸고, 문제는 신호 관찰, 원인 범위 축소, patch, 회귀 테스트 순서로 해결합니다. OpenStockAI의 300개 대표 질의와 175개 routing 계약 테스트처럼 Agent 동작도 같은 방식으로 검증합니다.";
+  }
+  if (isPersonalityQuestion(question)) {
+    return locale === "en"
+      ? "Colleagues would describe me as a developer who turns vague requests into context, reproduction conditions, and completion criteria a team can execute on. I approach problems systematically — observe signals, narrow the cause, then close with a patch and regression tests — and I treat the interface and the Agent flow as one product experience."
+      : "저는 모호한 요청도 맥락, 재현 조건, 완료 기준으로 정리해 팀이 바로 실행할 수 있게 만드는 개발자입니다. 문제는 신호를 관찰하고 원인 범위를 좁힌 뒤 patch와 회귀 테스트로 마무리하는 체계적인 성향이고, 화면과 Agent 흐름을 하나의 제품 경험으로 설계합니다.";
   }
   if (intent === "hiring" || intent === "general") {
     const stepSet = hiringStepSets[targetRole === "frontend" || targetRole === "agent" ? targetRole : "general"];
