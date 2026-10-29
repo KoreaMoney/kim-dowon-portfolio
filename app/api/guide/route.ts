@@ -3,6 +3,7 @@ import { z } from "zod/v4";
 import { runGuide } from "@/lib/guide/graph";
 import { guideFallbackPayload } from "@/lib/guide/fallback";
 import { GUIDE_LIMITS, guideMemorySchema } from "@/lib/guide/safety";
+import { isGuideRateLimited } from "@/lib/guide/rate-limit";
 
 const messageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -27,6 +28,14 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: locale === "en" ? "Check the question and recent conversation length." : "질문과 최근 대화 길이를 확인해 주세요." },
       { status: 400 },
+    );
+  }
+
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "local";
+  if (isGuideRateLimited(ip)) {
+    return NextResponse.json(
+      { error: payload.locale === "en" ? "Too many requests. Please try again in a moment." : "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
+      { status: 429 },
     );
   }
 

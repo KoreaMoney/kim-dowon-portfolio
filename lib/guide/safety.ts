@@ -1,4 +1,4 @@
-import type { GuideIntent, GuideLocale } from "./logic";
+import type { GuideCompany, GuideIntent, GuideLocale } from "./logic";
 import { z } from "zod/v4";
 
 export type GuideHistoryMessage = {
@@ -115,7 +115,15 @@ export function guardedGuideAnswer(reason: GuideGuardReason, locale: GuideLocale
   return "저는 인증 정보나 비공개 데이터를 제공하지 않습니다. 대신 검증된 프론트엔드와 AI Agent 경험을 설명드릴 수 있습니다. 채용 판단에 필요한 영역부터 살펴볼까요?";
 }
 
-export function validateGuideAnswer(answer: string, locale: GuideLocale, evidence: string[], intent?: GuideIntent, question = ""): string | null {
+const companyAnswerPatterns: Record<GuideCompany, RegExp> = {
+  wiseai: /WiseAI|와이즈(?:\s*(?:에이아이|ai))?/i,
+  opendoorlabs: /Open\s*Door\s*Labs?|오픈\s*도어(?:\s*랩스?)?/i,
+  sbt: /SBT(?:\s*Global)?|에스비티/i,
+  infoin: /Infoin|인포인/i,
+  jset: /JSET|제이셋|스태츠칩팩|스탯츠칩팩|Stats?\s*Chip\s*Pac/i,
+};
+
+export function validateGuideAnswer(answer: string, locale: GuideLocale, evidence: string[], intent?: GuideIntent, question = "", companyHint: GuideCompany | null = null): string | null {
   const normalized = answer.replace(/\r/g, "").replace(/[ \t]+/g, " ").trim();
   if (!normalized || normalized.length > GUIDE_LIMITS.answer) return null;
   if (/```|<\/?[a-z][^>]*>|^\s*(?:#{1,6}|[-*>]|\d+\.)\s/m.test(normalized)) return null;
@@ -126,7 +134,10 @@ export function validateGuideAnswer(answer: string, locale: GuideLocale, evidenc
   if (locale === "en" && /[가-힣]/.test(normalized)) return null;
   if (locale === "ko" && !/(?:저는|제가|저의|저를|저에게)/.test(normalized)) return null;
   if (/(?:WiseAI.{0,120}LayoutEditor|LayoutEditor.{0,120}WiseAI)/i.test(normalized)) return null;
-  if (intent === "hiring" && !/WiseAI|와이즈|SBT|에스비티|Infoin|인포인|제이셋|스태츠칩팩|스탯츠칩팩|OpenDoor|오픈도어|JSET|company|회사/i.test(question) && /WiseAI|SBT Global|Infoin|JSET|OpenDoor/i.test(normalized)) return null;
+  if (intent === "hiring" && !/WiseAI|와이즈|SBT|에스비티|Infoin|인포인|제이셋|스태츠칩팩|스탯츠칩팩|OpenDoor|오픈도어|JSET|company|회사/i.test(question)) {
+    const unchecked = companyHint ? normalized.replace(companyAnswerPatterns[companyHint], "") : normalized;
+    if (/WiseAI|SBT Global|Infoin|JSET|OpenDoor/i.test(unchecked)) return null;
+  }
   if (intent === "openalarm" && /일정|일상|강화|사용자 경험|입력|출력|사용 사례|schedule|routine|strengthen|user experience|input|output|use case/i.test(normalized)) return null;
   if ((intent === "openstock" || intent === "opendata" || intent === "openalarm") && /보여드릴|알려드릴|설명드릴까요|확인해 보실까요|would you like|I can show|I can explain|which .{0,40}(?:help|explore|explain)/i.test(normalized)) return null;
 

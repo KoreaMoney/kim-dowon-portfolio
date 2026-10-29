@@ -1,6 +1,7 @@
+import { isGuideRateLimited } from "./rate-limit";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { detectGuideIntent, detectNamedCompany, fallbackGuideAnswer, guideSuggestions, isIdentityQuestion, resolveGuideIntent, retrieveGuideEvidence, type GuideIntent, type GuideLocale } from "./logic";
+import { detectGuideIntent, detectNamedCompany, fallbackGuideAnswer, guideSuggestions, isIdentityQuestion, resolveGuideIntent, resolveGuideTopic, resolveNamedCompany, retrieveGuideEvidence, type GuideIntent, type GuideLocale } from "./logic";
 import { guideCards } from "./presentation";
 import { advanceGuideMemory, detectExplicitTargetRole, resolveTargetRole } from "./memory";
 import { EMPTY_GUIDE_MEMORY, inspectGuideInput, normalizeGuideHistory, normalizeGuideMemory, validateGuideAnswer, type GuideConversationMemory, type GuideEvidenceId, type GuideTargetRole } from "./safety";
@@ -322,6 +323,82 @@ test("named product intent survives natural follow-ups without swallowing explic
   assert.doesNotMatch(diaryFallback, /\?/);
 });
 
+test("referential follow-ups resolve the discussed project instead of a broad bucket", () => {
+  const stockHistory = [
+    { role: "user" as const, content: "OpenStockAI가 뭐야?" },
+    { role: "assistant" as const, content: "OpenStockAI는 전문 역할별 조사와 판단을 300개 대표 질의와 175개 routing 계약 테스트로 검증하는 프로젝트입니다." },
+  ];
+  assert.equal(resolveGuideIntent("그 프로젝트에서 어떤 기술을 썼어?", "ko", stockHistory), "openstock");
+  assert.equal(resolveGuideIntent("거기서 뭘 검증해?", "ko", stockHistory), "openstock");
+  assert.equal(resolveGuideIntent("what stack does it use?", "en", stockHistory), "openstock");
+
+  const listHistory = [
+    { role: "user" as const, content: "대표 프로젝트가 뭐야?" },
+    {
+      role: "assistant" as const,
+      content: "대표 프로젝트로는 AI LayoutEditor, 10개 언어 번역 Agent, 병원 상담예약 Agent, OpenStockAI, OpenDataLabs, OpenAlarm이 있습니다.",
+    },
+  ];
+  assert.equal(resolveGuideIntent("첫번째 것 말이야. 거기서 본인이 한 역할이 뭐야?", "ko", listHistory), "frontend");
+  assert.equal(resolveGuideIntent("두번째 프로젝트는 뭐 했어?", "ko", listHistory), "agent");
+  assert.equal(resolveGuideIntent("네번째 거 더 알려줘", "ko", listHistory), "openstock");
+  assert.equal(resolveGuideIntent("마지막 프로젝트 설명해줘", "ko", listHistory), "openalarm");
+  assert.equal(resolveGuideIntent("tell me about the second one", "en", listHistory), "agent");
+
+  assert.equal(resolveGuideIntent("그 프로젝트 기술 스택은?", "ko", listHistory), "projects");
+  assert.equal(resolveGuideIntent("그거 말고 OpenAlarm은?", "ko", stockHistory), "openalarm");
+  assert.equal(resolveGuideIntent("첫번째 것 말이야. 거기서 본인이 한 역할이 뭐야?", "ko", []), "career");
+});
+
+test("resolved referents name the product the model should answer about", () => {
+  const listHistory = [
+    {
+      role: "assistant" as const,
+      content: "대표 프로젝트로는 AI LayoutEditor, 10개 언어 번역 Agent, 병원 상담예약 Agent, OpenStockAI, OpenDataLabs, OpenAlarm이 있습니다.",
+    },
+  ];
+  assert.equal(resolveGuideTopic("첫번째 거 역할이 뭐야?", "ko", listHistory).referent, "AI LayoutEditor");
+  assert.equal(resolveGuideTopic("두번째는?", "ko", listHistory).referent, "10개 언어 번역 Agent");
+  assert.equal(resolveGuideTopic("tell me about the last one", "en", listHistory).referent, "OpenAlarm");
+  assert.equal(resolveGuideTopic("what does the second one use?", "en", listHistory).referent, "the 10-language Translation Agent");
+
+  const stockHistory = [{ role: "user" as const, content: "OpenStockAI가 뭐야?" }];
+  assert.equal(resolveGuideTopic("그 프로젝트 기술 스택은?", "ko", stockHistory).referent, "OpenStockAI");
+  assert.equal(resolveGuideTopic("그 프로젝트 기술 스택은?", "ko", listHistory).referent, null);
+  assert.equal(resolveGuideTopic("대표 프로젝트가 뭐야?", "ko", listHistory).referent, null);
+});
+
+test("questions naming multiple products widen to the projects intent", () => {
+  assert.equal(resolveGuideIntent("OpenStockAI랑 OpenAlarm 비교해줘", "ko", []), "projects");
+  assert.equal(resolveGuideIntent("Compare OpenStockAI and OpenDataLabs", "en", []), "projects");
+  assert.equal(resolveGuideIntent("OpenStockAI 하나만 설명해줘", "ko", []), "openstock");
+  const evidence = retrieveGuideEvidence("projects").join(" ");
+  assert.match(evidence, /OpenStockAI/);
+  assert.match(evidence, /OpenAlarm/);
+});
+
+test("company referents resolve from single-company assistant turns and company ordinals", () => {
+  const wiseHistory = [{ role: "assistant" as const, content: "저는 WiseAI에서 AI Agent Pro · Frontend로 일하고 있습니다." }];
+  assert.equal(resolveNamedCompany("거기서 뭐 했어?", wiseHistory), "wiseai");
+
+  const careerHistory = [
+    {
+      role: "assistant" as const,
+      content: "저는 현재 WiseAI의 AI Agent Pro · Frontend와 OpenDoorLabs의 Founder · AI Product Engineer 역할을 함께 맡고 있습니다. 이전에는 SBT Global과 Infoin에서 일했습니다.",
+    },
+  ];
+  assert.equal(resolveNamedCompany("첫번째 회사는 어디야?", careerHistory), "wiseai");
+  assert.equal(resolveNamedCompany("마지막 회사는 어디야?", careerHistory), "infoin");
+  assert.equal(resolveNamedCompany("거기서 뭐 했어?", careerHistory), null);
+});
+
+test("named product evidence keeps portfolio context so the model has material", () => {
+  for (const intent of ["openstock", "opendata", "openalarm"] as GuideIntent[]) {
+    const evidence = retrieveGuideEvidence(intent).join(" ");
+    assert.match(evidence, /OpenDoorLabs/, `${intent} evidence keeps the operating-company context`);
+  }
+});
+
 test("candidate positioning covers building and improving Frontend and Agents", () => {
   assert.match(fallbackGuideAnswer("general"), /Frontend와 AI Agent를 직접 구축하고 개선/);
   assert.match(fallbackGuideAnswer("hiring"), /Frontend와 AI Agent를 직접 구축하고 개선/);
@@ -421,6 +498,74 @@ test("model output validation rejects invented metrics, mixed language, and secr
   );
   assert.equal(validateGuideAnswer("I use OPENAI_API_KEY=sk-example123456789.", "en", evidence), null);
   assert.equal(validateGuideAnswer("I connect Frontend and AI Agent work.", "en", evidence), "I connect Frontend and AI Agent work.");
+});
+
+test("company referents map to career instead of noisy assistant history", () => {
+  const history = [
+    { role: "user" as const, content: "요즘 어디서 일해?" },
+    { role: "assistant" as const, content: "저는 WiseAI에서 AI Agent Pro · Frontend로 일하고 있습니다." },
+  ];
+  const topic = resolveGuideTopic("거기서 무슨 일 해?", "ko", history);
+  assert.equal(topic.intent, "career");
+  assert.equal(topic.referent, "WiseAI");
+  const projects = resolveGuideTopic("거기 프로젝트 뭐야?", "ko", history);
+  assert.equal(projects.intent, "projects");
+  assert.equal(projects.referent, "WiseAI");
+});
+
+test("elaboration and among-them follow-ups continue the resolved topic", () => {
+  const history = [
+    { role: "user" as const, content: "OpenStockAI가 뭐야?" },
+    { role: "assistant" as const, content: "저는 OpenStockAI를 300개 대표 질의와 175개 routing 계약 테스트로 검증합니다." },
+  ];
+  assert.equal(resolveGuideTopic("자세히 알려줘", "ko", history).intent, "openstock");
+  assert.equal(resolveGuideTopic("자세히 설명해줘", "ko", history).intent, "openstock");
+  const among = resolveGuideTopic("그 중에 뭐가 제일 어려웠어?", "ko", history);
+  assert.equal(among.intent, "openstock");
+  assert.equal(among.referent, "OpenStockAI");
+  assert.equal(resolveGuideTopic("What was the hardest part?", "en", history).intent, "openstock");
+  assert.equal(resolveGuideTopic("오늘 날씨 어때?", "ko", history).intent, "out_of_scope");
+});
+
+test("unresolvable referents clarify instead of rejecting as out-of-scope", () => {
+  assert.equal(resolveGuideTopic("그거 자세히 알려줘", "ko", []).intent, "projects");
+  assert.equal(resolveGuideTopic("거기 분위기 어때?", "ko", []).intent, "career");
+  assert.equal(resolveGuideTopic("How does it work?", "en", []).intent, "projects");
+  const careerHistory = [{ role: "user" as const, content: "경력이 어떻게 돼?" }];
+  assert.equal(resolveGuideTopic("그거 자세히 알려줘", "ko", careerHistory).intent, "career");
+});
+
+test("memory lastIntent continues follow-ups when history is empty", () => {
+  assert.equal(resolveGuideTopic("자세히 알려줘", "ko", [], "openstock").intent, "openstock");
+  assert.equal(resolveGuideTopic("자세히 알려줘", "ko", [], "greeting").intent, "out_of_scope");
+  assert.equal(resolveGuideTopic("자세히 알려줘", "ko", [], null).intent, "out_of_scope");
+});
+
+test("rate limiter caps requests per key within the window", () => {
+  const key = `test-${Math.random()}`;
+  const base = 1_700_000_000_000;
+  for (let i = 0; i < 30; i += 1) assert.equal(isGuideRateLimited(key, base + i), false);
+  assert.equal(isGuideRateLimited(key, base + 30), true);
+  assert.equal(isGuideRateLimited(`${key}-other`, base + 30), false);
+  assert.equal(isGuideRateLimited(key, base + 61_000), false);
+});
+
+test("referent company names pass validation while unrelated employers stay blocked", () => {
+  const wiseEvidence = retrieveGuideEvidence("career", "ko", "unknown", "거기서 무슨 일 해?", [
+    { role: "assistant" as const, content: "저는 WiseAI에서 AI Agent Pro · Frontend로 일하고 있습니다." },
+  ]);
+  assert.equal(
+    validateGuideAnswer("저는 WiseAI에서 병원 상담예약 Agent 챗봇을 개발합니다.", "ko", wiseEvidence, "hiring", "거기서 무슨 일 해?", "wiseai"),
+    "저는 WiseAI에서 병원 상담예약 Agent 챗봇을 개발합니다.",
+  );
+  assert.equal(
+    validateGuideAnswer("저는 Infoin에서 3D 제품을 개발했습니다.", "ko", wiseEvidence, "hiring", "거기서 무슨 일 해?", "wiseai"),
+    null,
+  );
+  assert.equal(
+    validateGuideAnswer("At WiseAI I build a booking Agent chatbot.", "en", retrieveGuideEvidence("hiring", "en"), "hiring", "Why should we hire you?"),
+    null,
+  );
 });
 
 test("recruiter role memory follows explicit user choices and latest switches", () => {

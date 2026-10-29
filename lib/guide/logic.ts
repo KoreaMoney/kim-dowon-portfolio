@@ -105,13 +105,37 @@ export function detectNamedCompany(question: string): GuideCompany | null {
   return found;
 }
 
+function companiesMentionsInOrder(text: string): GuideCompany[] {
+  const found: Array<{ index: number; company: GuideCompany }> = [];
+  for (const [company, pattern] of companyMentionPatterns) {
+    const match = pattern.exec(text);
+    if (match) found.push({ index: match.index, company });
+  }
+  return found.sort((a, b) => a.index - b.index).map((entry) => entry.company);
+}
+
 export function resolveNamedCompany(question: string, history: GuideHistoryMessage[] = []): GuideCompany | null {
   const direct = detectNamedCompany(question);
   if (direct) return direct;
+  const ordinal = ordinalReferencePatterns.find(([pattern]) => pattern.test(question))?.[1];
+  if (ordinal !== undefined && /회사|직장|직책|company|employer|workplace/i.test(question)) {
+    for (const message of [...history].reverse()) {
+      if (message.role !== "assistant") continue;
+      const companies = companiesMentionsInOrder(message.content);
+      if (!companies.length) continue;
+      const index = ordinal === -1 ? companies.length - 1 : ordinal;
+      return index < companies.length ? companies[index] : null;
+    }
+    return null;
+  }
   for (const message of [...history].reverse()) {
-    if (message.role !== "user") continue;
-    const company = detectNamedCompany(message.content);
-    if (company) return company;
+    if (message.role === "user") {
+      const company = detectNamedCompany(message.content);
+      if (company) return company;
+      continue;
+    }
+    const companies = companiesMentionsInOrder(message.content);
+    if (companies.length === 1) return companies[0];
   }
   return null;
 }
@@ -143,26 +167,147 @@ export function detectGuideIntent(question: string, locale: GuideLocale = "ko"):
 }
 
 const followUpPatterns = [
-  /(?:더|좀 더)\s*(?:자세히|구체적으로)|예시|사례|그중|그건|그 부분|그 제품|그 프로젝트|그 agent|거기|그곳|어떻게|왜 그런|그렇게|그래서|그\s*이유|이유는|왜\s*그|더 알려|더 보여|더 말해|계속|다음|AI 일기|일기 회고|3단계 알림|대표 질의|routing|계약 테스트|논문|요구사항/i,
-  /\b(?:tell me more|more detail|concrete example|an example|how so|which one|that result|that project|that product|that agent|that company|that employer|there|what about that|go on|elaborate|AI diary|diary reflection|3-stage|representative queries|routing|contract tests?|papers?|requirements?|test criteria|how|more|continue|next|why)\b/i,
+  /자세히|자세한|구체적|설명해|예시|사례|그\s*중|그건|그 부분|그 제품|그 프로젝트|그 agent|거기|그곳|어떻게|왜 그런|그렇게|그래서|그\s*이유|이유는|왜\s*그|더 알려|더 보여|더 말해|계속|다음|AI 일기|일기 회고|3단계 알림|대표 질의|routing|계약 테스트|논문|요구사항|첫\s*번째|두\s*번째|세\s*번째|네\s*번째|다섯\s*번째|첫째|둘째|셋째|넷째|다섯째|마지막\s*(?:것|거)/i,
+  /\b(?:tell me more|more detail|concrete example|an example|how so|which one|that result|that project|that product|that agent|that company|that employer|there|what about that|go on|elaborate|AI diary|diary reflection|3-stage|representative queries|routing|contract tests?|papers?|requirements?|test criteria|hardest|difficult|challenging|challenge|toughest|trickiest|how|more|continue|next|why)\b|\b(?:first|second|third|fourth|fifth|last)\s+(?:one|project|product|item|build|agent)\b/i,
 ];
+
+const ordinalReferencePatterns: Array<[RegExp, number]> = [
+  [/첫\s*번째(?!\s*로)|첫째(?!\s*로)|\b(?:first|1st)\s+(?:one|project|product|item|build|agent|company|employer)\b/i, 0],
+  [/두\s*번째(?!\s*로)|둘째(?!\s*로)|\b(?:second|2nd)\s+(?:one|project|product|item|build|agent|company|employer)\b/i, 1],
+  [/세\s*번째(?!\s*로)|셋째(?!\s*로)|\b(?:third|3rd)\s+(?:one|project|product|item|build|agent|company|employer)\b/i, 2],
+  [/네\s*번째(?!\s*로)|넷째(?!\s*로)|\b(?:fourth|4th)\s+(?:one|project|product|item|build|agent|company|employer)\b/i, 3],
+  [/다섯\s*번째(?!\s*로)|다섯째(?!\s*로)|\b(?:fifth|5th)\s+(?:one|project|product|item|build|agent|company|employer)\b/i, 4],
+  [/여섯\s*번째(?!\s*로)|여섯째(?!\s*로)|\b(?:sixth|6th)\s+(?:one|project|product|item|build|agent|company|employer)\b/i, 5],
+  [/마지막\s*(?:것|거|프로젝트|제품|항목|회사|직장)|\blast\s+(?:one|project|product|item|build|agent|company|employer)\b/i, -1],
+];
+
+type ReferableProduct = { intent: GuideIntent; label: Record<GuideLocale, string> };
+
+const referableProjectPatterns: Array<{ referent: ReferableProduct; pattern: RegExp }> = [
+  { referent: { intent: "frontend", label: { ko: "AI LayoutEditor", en: "AI LayoutEditor" } }, pattern: /레이아웃\s*에디터|\b(?:ai\s*)?layouteditor\b/i },
+  { referent: { intent: "frontend", label: { ko: "3D 디지털 트윈", en: "3D Digital Twin" } }, pattern: /디지털\s*트윈|\b(?:3d\s*)?digital\s*twin\b/i },
+  { referent: { intent: "frontend", label: { ko: "sweet-diagram", en: "sweet-diagram" } }, pattern: /sweet[\s-]?diagram/i },
+  { referent: { intent: "frontend", label: { ko: "Diagram 라이브러리", en: "the Diagram library" } }, pattern: /다이어그램|\bdiagram\s*library\b/i },
+  { referent: { intent: "frontend", label: { ko: "커스텀 스프레드시트 엔진", en: "the custom spreadsheet engine" } }, pattern: /스프레드시트|\bspreadsheet\b/i },
+  { referent: { intent: "agent", label: { ko: "10개 언어 번역 Agent", en: "the 10-language Translation Agent" } }, pattern: /번역\s*agent|translation\s*agent|10개\s*언어|10\s*languages?/i },
+  { referent: { intent: "agent", label: { ko: "병원 상담예약 Agent", en: "the Hospital Consultation and Booking Agent" } }, pattern: /병원\s*상담예약|상담예약\s*agent|예약\s*agent|hospital\s*consultation|booking\s*agent/i },
+  { referent: { intent: "agent", label: { ko: "Browser + Observer Agent", en: "the Browser + Observer Agent" } }, pattern: /browser\s*\+\s*observer/i },
+  { referent: { intent: "agent", label: { ko: "AX Agent Admin", en: "the AX Agent Admin platform" } }, pattern: /ax\s*agent\s*admin|ax\s*admin/i },
+  { referent: { intent: "openstock", label: { ko: "OpenStockAI", en: "OpenStockAI" } }, pattern: /\bopenstock(?:\s*ai)?\b/i },
+  { referent: { intent: "opendata", label: { ko: "OpenDataLabs", en: "OpenDataLabs" } }, pattern: /\bopendata(?:\s*labs?)?\b/i },
+  { referent: { intent: "openalarm", label: { ko: "OpenAlarm", en: "OpenAlarm" } }, pattern: /\bopenalarm\b/i },
+];
+
+type ResolvedReferent = ReferableProduct;
+
+function projectMentionsInOrder(text: string): ResolvedReferent[] {
+  const found: Array<{ index: number; end: number; referent: ReferableProduct }> = [];
+  for (const { referent, pattern } of referableProjectPatterns) {
+    const match = pattern.exec(text);
+    if (match) found.push({ index: match.index, end: match.index + match[0].length, referent });
+  }
+  found.sort((a, b) => a.index - b.index || b.end - a.end);
+  const mentions: ResolvedReferent[] = [];
+  let lastEnd = -1;
+  for (const entry of found) {
+    if (entry.index < lastEnd) continue;
+    lastEnd = entry.end;
+    mentions.push(entry.referent);
+  }
+  return mentions;
+}
+
+const referentialPatterns = [
+  /(?:그|이|저)\s*(?:프로젝트|제품|서비스|것|거|게|사례|케이스|에이전트|agent|빌드|build|툴|도구)|거기(?:서|에|는|의)?|그곳|그\s*중(?:에서|에)?|방금(?:\s*전)?\s*(?:말한|나온|언급한|그)|아까\s*(?:말한|나온|언급한|그)|앞서\s*(?:말한|언급한)|먼저\s*언급한/i,
+  /\b(?:that|the|this)\s+(?:project|product|agent|build|service|one|company|tool)\b|\b(?:about|in|of|for|on|behind|inside)\s+it\b|\bit\s+(?:work|use|handle|do|run)/i,
+  ...ordinalReferencePatterns.map(([pattern]) => pattern),
+];
+
+const referentialOverrideIntents = new Set<GuideIntent>(["projects", "career", "general", "hiring", "out_of_scope"]);
+const singleProductIntents = new Set<GuideIntent>(["openstock", "opendata", "openalarm"]);
+
+export const companyLabels: Record<GuideCompany, Record<GuideLocale, string>> = {
+  wiseai: { ko: "WiseAI", en: "WiseAI" },
+  opendoorlabs: { ko: "OpenDoorLabs", en: "OpenDoorLabs" },
+  sbt: { ko: "SBT Global", en: "SBT Global" },
+  infoin: { ko: "Infoin", en: "Infoin" },
+  jset: { ko: "제이셋스태츠칩팩코리아(유)", en: "JSET StatsChipPAC Korea Co., Ltd." },
+};
+const companyNounPattern = /회사|직장|직책|company|employer|workplace/i;
+const projectNounPattern = /프로젝트|제품|서비스|에이전트|project|product|service|agent/i;
+
+type ResolvedReferentialIntent = { intent: GuideIntent; label: string | null };
+
+function resolveReferentialIntent(question: string, history: GuideHistoryMessage[], locale: GuideLocale): ResolvedReferentialIntent | null {
+  const ordinal = ordinalReferencePatterns.find(([pattern]) => pattern.test(question))?.[1];
+  if (ordinal !== undefined) {
+    if (companyNounPattern.test(question) && !projectNounPattern.test(question)) return null;
+    for (const message of [...history].reverse()) {
+      if (message.role !== "assistant") continue;
+      const mentions = projectMentionsInOrder(message.content);
+      if (!mentions.length) continue;
+      const index = ordinal === -1 ? mentions.length - 1 : ordinal;
+      return index < mentions.length ? { intent: mentions[index].intent, label: mentions[index].label[locale] } : null;
+    }
+    return null;
+  }
+  for (const message of [...history].reverse()) {
+    const mentions = projectMentionsInOrder(message.content);
+    const intents = new Set(mentions.map((mention) => mention.intent));
+    if (intents.size > 1) return null;
+    if (intents.size === 1) {
+      const labels = new Set(mentions.map((mention) => mention.label[locale]));
+      return { intent: mentions[0].intent, label: labels.size === 1 ? mentions[0].label[locale] : null };
+    }
+  }
+  return null;
+}
 
 const explicitOffTopicPatterns = [
   /날씨|맛집|정치|뉴스|연봉|급여|주가|코인|비트코인|환율|햄버거|피자|치킨|레시피|음식|메뉴\s*추천|영화|드라마|넷플릭스|영화관|콘서트|음악|노래|아이돌|연예인|축구|야구|농구|스포츠|여행|호텔|항공권|관광|웹툰|만화|소설|(?:오늘|지금|현재|내일|어제).{0,10}(?:날짜|요일|몇\s*시)/,
   /\b(?:weather|restaurants?|politics?|news|salary|compensation|stock price|crypto|bitcoin|exchange rate|foods?|burger|pizza|chicken|recipe|movies?|film|netflix|musics?|songs?|concerts?|idols?|sports?|soccer|baseball|basketball|travels?|hotels?|flights?|jokes?|lottery|lotto|dating|manga|webtoon)\b|\b(?:today'?s|current)\s+(?:date|time)\b|\bwhat (?:time|day|date) is it\b|\bwhat'?s the date\b|\bgames?\s+(?:recommend|suggest)/i,
 ];
 
-export function resolveGuideIntent(question: string, locale: GuideLocale = "ko", history: GuideHistoryMessage[] = []): GuideIntent {
-  const directIntent = detectGuideIntent(question, locale);
-  if (explicitOffTopicPatterns.some((pattern) => pattern.test(question))) return "out_of_scope";
-  const isFollowUp = followUpPatterns.some((pattern) => pattern.test(question));
-  if (!isFollowUp || (directIntent !== "out_of_scope" && directIntent !== "general")) return directIntent;
+export type ResolvedGuideTopic = { intent: GuideIntent; referent: string | null };
 
-  for (const message of [...history].reverse()) {
-    const previousIntent = detectGuideIntent(message.content, locale);
-    if (previousIntent !== "out_of_scope") return previousIntent;
+export function resolveGuideTopic(question: string, locale: GuideLocale = "ko", history: GuideHistoryMessage[] = [], fallbackIntent: GuideIntent | null = null): ResolvedGuideTopic {
+  const directIntent = detectGuideIntent(question, locale);
+  if (explicitOffTopicPatterns.some((pattern) => pattern.test(question))) return { intent: "out_of_scope", referent: null };
+  const mentionedIntents = new Set(projectMentionsInOrder(question).map((mention) => mention.intent));
+  if (mentionedIntents.size > 1 && singleProductIntents.has(directIntent)) return { intent: "projects", referent: null };
+  let referentLabel: string | null = null;
+  const isReferential = referentialPatterns.some((pattern) => pattern.test(question));
+  if (isReferential) {
+    const referent = resolveReferentialIntent(question, history, locale);
+    if (referent) {
+      return {
+        intent: referentialOverrideIntents.has(directIntent) ? referent.intent : directIntent,
+        referent: referent.label,
+      };
+    }
+    const company = resolveNamedCompany(question, history);
+    if (company) {
+      referentLabel = companyLabels[company][locale];
+      if (directIntent === "out_of_scope" || directIntent === "general") return { intent: "career", referent: referentLabel };
+    }
   }
-  return directIntent;
+  const isFollowUp = followUpPatterns.some((pattern) => pattern.test(question));
+  if (isFollowUp && (directIntent === "out_of_scope" || directIntent === "general")) {
+    for (const message of [...history].reverse()) {
+      const previousIntent = detectGuideIntent(message.content, locale);
+      if (previousIntent !== "out_of_scope") return { intent: previousIntent, referent: referentLabel };
+    }
+    if (fallbackIntent && fallbackIntent !== "out_of_scope" && fallbackIntent !== "greeting") return { intent: fallbackIntent, referent: referentLabel };
+  }
+  if (isReferential && directIntent === "out_of_scope") {
+    const intent = companyNounPattern.test(question) || /거기|그곳|\bthere\b/i.test(question) ? "career" : "projects";
+    return { intent, referent: referentLabel };
+  }
+  return { intent: directIntent, referent: referentLabel };
+}
+
+export function resolveGuideIntent(question: string, locale: GuideLocale = "ko", history: GuideHistoryMessage[] = [], fallbackIntent: GuideIntent | null = null): GuideIntent {
+  return resolveGuideTopic(question, locale, history, fallbackIntent).intent;
 }
 
 type GuideFacts = {
@@ -189,9 +334,9 @@ function retrieveEvidenceForFacts(intent: GuideIntent, targetRole: GuideTargetRo
   if (intent === "hiring") return [...facts.career.slice(0, 2), ...facts.frontend.slice(0, 2), ...facts.agent.slice(0, 2), ...facts.collaboration];
   if (intent === "frontend") return [...facts.frontend, ...facts.collaboration.slice(1)];
   if (intent === "agent") return [...facts.agent, ...facts.projects.slice(1, 4), ...facts.collaboration.slice(2)];
-  if (intent === "openstock") return [facts.projects[1]];
-  if (intent === "opendata") return [facts.projects[2]];
-  if (intent === "openalarm") return [facts.projects[3]];
+  if (intent === "openstock") return [facts.projects[1], facts.career[2]];
+  if (intent === "opendata") return [facts.projects[2], facts.career[2]];
+  if (intent === "openalarm") return [facts.projects[3], facts.career[2]];
   if (intent === "career") return [...facts.career, facts.projects[0]];
   if (intent === "contact") return [...facts.contact];
   if (intent === "greeting" || intent === "out_of_scope") return [];
