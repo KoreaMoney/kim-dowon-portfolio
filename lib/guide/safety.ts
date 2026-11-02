@@ -141,7 +141,15 @@ export function validateGuideAnswer(answer: string, locale: GuideLocale, evidenc
   if (intent === "openalarm" && /일정|일상|강화|사용자 경험|입력|출력|사용 사례|schedule|routine|strengthen|user experience|input|output|use case/i.test(normalized)) return null;
   if ((intent === "openstock" || intent === "opendata" || intent === "openalarm") && /보여드릴|알려드릴|설명드릴까요|확인해 보실까요|would you like|I can show|I can explain|which .{0,40}(?:help|explore|explain)/i.test(normalized)) return null;
 
-  const allowedNumbers = new Set(evidence.join(" ").match(/\d+(?:\.\d+)?/g) ?? []);
+  const allowedNumbers = new Set<string>();
+  for (const token of evidence.join(" ").match(/\d+(?:\.\d+)?/g) ?? []) {
+    allowedNumbers.add(token);
+    // "2017.02"-style evidence (YYYY.MM dates, versions) also permits the
+    // integer part alone, so "in 2017" counts as grounded while "95" from
+    // "1.95" still does not.
+    const integerPart = token.split(".")[0];
+    if (integerPart) allowedNumbers.add(integerPart);
+  }
   const answerNumbers = normalized.match(/\d+(?:\.\d+)?/g) ?? [];
   if (answerNumbers.some((number) => !allowedNumbers.has(number))) return null;
   return normalized;

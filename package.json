@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "tsx --test lib/guide/logic.test.ts lib/guide/exit-intent.test.ts lib/intro-guide-lifecycle.test.ts"
+    "test": "tsx --test lib/guide/logic.test.ts lib/guide/exit-intent.test.ts lib/intro-guide-lifecycle.test.ts",
+    "rag:embed": "node scripts/embed-knowledge.mjs",
+    "rag:eval": "tsx --conditions=react-server scripts/rag-eval.mjs"
   },
   "dependencies": {
     "@langchain/core": "^1.3.0",
@@ -24,6 +26,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0",
+    "server-only": "0.0.1",
     "tailwind-merge": "^3.3.1",
     "zod": "^4.6.7"
   },

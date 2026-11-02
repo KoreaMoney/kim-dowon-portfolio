@@ -12,8 +12,11 @@
 
 - **한·영 이중 로케일** — 쿠키 기반 전환, 페이지별 로컬라이즈된 메타데이터와 OG 태그
 - **인터랙티브 케이스 스터디** — Flow visual, 커리어 commit log, 프로젝트 스트림 등 개발자 도구 메타포 UI
-- **Guide Agent** — 방문자 질문에 답하는 LangGraph 기반 챗봇
+- **Guide Agent** — 방문자 질문에 답하는 LangGraph 기반 챗봇 (`routeIntent → retrieveEvidence → answerQuestion → commitTurn`)
   - `OPENAI_API_KEY` 설정 시 OpenAI Responses API로 생성 후 포트폴리오 근거와 검증 규칙으로 검수
+  - 이력서 RAG: `lib/guide/knowledge/*.md` 청크를 OpenAI 임베딩으로 사전 계산(`pnpm rag:embed`)해 코사인 유사도 + 키워드 부스트로 검색, 큐레이션 근거와 병합
+  - `TYPESAFE_API_KEY` 설정 시 Jev(System One)가 한 번의 호출로 전체 청크를 확률 랭킹하고 주제 적합성(Noul)으로 스코프를 게이트 — 미설정·실패 시 임베딩 검색으로 자동 폴백
+  - `threadId`로 서버측 세션(MemorySaver 체크포인트)을 재개하고, `history`/`context`는 DeltaValue 델타 채널로 저장해 체크포인트 크기를 절감
   - 키가 없거나 검증 실패 시 검증된 포트폴리오 답변으로 안전하게 폴백
   - 프롬프트 인젝션 차단, 수치·근거 검증, 대화 메모리(포지션 추론·반복 방지)
 - **PDF 다운로드** — ReportLab 스크립트로 제출용 PDF 생성
@@ -34,7 +37,8 @@
 ```
 app/                App Router 페이지와 /api/guide 엔드포인트
 components/         페이지 UI, Guide Agent 챗봇, locale provider
-lib/guide/          LangGraph 파이프라인 — intent 라우팅, 근거 검색, 답변 검증, 폴백
+lib/guide/          LangGraph 파이프라인 — intent 라우팅, 근거 검색, RAG, 답변 검증, 폴백
+lib/guide/knowledge/  이력서 지식 청크 (.md, `## 제목` 단위 분할)
 lib/i18n/           로케일 쿠키와 페이지 메타데이터
 scripts/            PDF 생성 스크립트 (ReportLab)
 ```
@@ -50,8 +54,13 @@ pnpm dev
 
 | 변수 | 필수 | 설명 |
 |---|---|---|
-| `OPENAI_API_KEY` | 선택 | 설정 시 Guide Agent가 OpenAI를 호출. 미설정 시 검증된 포트폴리오 답변으로 동작 |
+| `OPENAI_API_KEY` | 선택 | 설정 시 Guide Agent가 OpenAI를 호출하고 이력서 RAG 검색이 활성화됨. 미설정 시 검증된 포트폴리오 답변으로 동작 |
 | `OPENAI_MODEL` | 선택 | 사용 모델 오버라이드 (기본값 `gpt-5.6-luna`, reasoning `low`) |
+| `OPENAI_EMBEDDING_MODEL` | 선택 | RAG 임베딩 모델 (기본값 `text-embedding-3-small`). 변경 시 `pnpm rag:embed` 재실행 필요 |
+| `GUIDE_RAG_TOP_K` | 선택 | 질문당 병합할 지식 청크 수 (기본값 4) |
+| `TYPESAFE_API_KEY` | 선택 | Jev 청크 랭킹 + 온토픽 게이트 활성화. 미설정 시 임베딩 검색 사용 |
+| `TYPESAFE_MODEL` | 선택 | Jev 모델 오버라이드 (기본값 `jev-latest`) |
+| `GUIDE_DEBUG` | 선택 | `1`이면 `/api/guide` 응답에 `trace`(엔진·온토픽·노드별 시간·세션) 추가. 로컬 디버그 전용 |
 | `NEXT_PUBLIC_SITE_URL` | 선택 | OG 이미지 절대 URL 기준. Vercel에서는 `VERCEL_URL` 자동 사용 |
 
 credential은 서버 전용 모듈(`server-only`)에서만 접근하며 브라우저 번들과 저장소에 포함되지 않습니다. `.env.example`을 참고해 `.env.local`에 설정하세요.
@@ -59,10 +68,13 @@ credential은 서버 전용 모듈(`server-only`)에서만 접근하며 브라�
 ## 품질 검사
 
 ```bash
-pnpm lint    # ESLint
-pnpm test    # Guide 로직·안전성 테스트 42개
-pnpm build   # 프로덕션 빌드
+pnpm lint      # ESLint
+pnpm test      # Guide 로직·안전성 테스트
+pnpm build     # 프로덕션 빌드
+pnpm rag:eval  # RAG 검색 품질 체크 (--answers로 전체 응답까지)
 ```
+
+개발 서버에서는 `GET /api/guide/graph`가 컴파일된 LangGraph를 Mermaid 다이어그램으로 렌더링합니다(프로덕션 404).
 
 ## PDF
 

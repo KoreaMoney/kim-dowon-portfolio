@@ -15,6 +15,7 @@ const requestSchema = z.object({
   history: z.array(messageSchema).max(GUIDE_LIMITS.historyMessages).default([]),
   locale: z.enum(["ko", "en"]).default("ko"),
   memory: guideMemorySchema.optional(),
+  threadId: z.string().trim().min(1).max(80).regex(/^[a-zA-Z0-9:_-]+$/).optional(),
 });
 
 export async function POST(request: Request) {
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
   const timeout = setTimeout(() => controller.abort(), 10_000);
 
   try {
-    const result = await runGuide(payload.question, controller.signal, payload.locale, payload.history, payload.memory);
+    const result = await runGuide(payload.question, controller.signal, payload.locale, payload.history, payload.memory, payload.threadId);
     return NextResponse.json(result);
   } catch (error) {
     console.error("guide request failed", error);

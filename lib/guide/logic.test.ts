@@ -500,6 +500,15 @@ test("model output validation rejects invented metrics, mixed language, and secr
   assert.equal(validateGuideAnswer("I connect Frontend and AI Agent work.", "en", evidence), "I connect Frontend and AI Agent work.");
 });
 
+test("dotted evidence numbers permit their integer part, not their fraction", () => {
+  const evidence = ["[학력 | 영진전문대학] 2012.03 - 2017.02 졸업. 반도체 공학 전공.", "[3D 트윈] 메모리를 1.95GB에서 912MB로 낮췄습니다."];
+  assert.equal(
+    validateGuideAnswer("I graduated with a Semiconductor Engineering degree in 2017.", "en", evidence),
+    "I graduated with a Semiconductor Engineering degree in 2017.",
+  );
+  assert.equal(validateGuideAnswer("I cut memory usage by 95%.", "en", evidence), null);
+});
+
 test("company referents map to career instead of noisy assistant history", () => {
   const history = [
     { role: "user" as const, content: "요즘 어디서 일해?" },

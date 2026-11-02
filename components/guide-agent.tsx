@@ -48,6 +48,23 @@ const introStoriesEn = [
 
 const GUIDE_ENGAGED_SESSION_KEY = "trace-guide:explicitly-engaged";
 const GUIDE_DISMISSED_SESSION_KEY = "trace-guide:intro-dismissed";
+const GUIDE_THREAD_SESSION_KEY = "trace-guide:thread-id";
+
+// One thread id per tab session so the server-side checkpoint can hold the
+// conversation; without it the guide answers statelessly from sent history.
+function readGuideThreadId() {
+  if (typeof window === "undefined") return null;
+  try {
+    let id = window.sessionStorage.getItem(GUIDE_THREAD_SESSION_KEY);
+    if (!id) {
+      id = `web-${crypto.randomUUID()}`;
+      window.sessionStorage.setItem(GUIDE_THREAD_SESSION_KEY, id);
+    }
+    return id;
+  } catch {
+    return null;
+  }
+}
 
 function readGuideSessionFlag(key: string) {
   if (typeof window === "undefined") return false;
@@ -287,7 +304,7 @@ function LocalizedGuide() {
       const response = await fetch("/api/guide", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, history, locale, memory: conversationMemoryRef.current }),
+        body: JSON.stringify({ question, history, locale, memory: conversationMemoryRef.current, threadId: readGuideThreadId() }),
         signal: controller.signal,
       });
       if (!response.ok) throw new Error("guide request failed");

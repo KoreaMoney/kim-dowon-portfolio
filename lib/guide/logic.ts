@@ -59,7 +59,7 @@ const keywordGroups: Array<[GuideIntent, string[]]> = [
   ["agent", ["agent", "에이전트", "llm", "번역", "예약", "브라우저", "와이즈덴탈", "wisedental", "wise dental", "챗봇", "chatbot", "chat bot", "langgraph", "langchain", "langfuse", "랭그래프", "랭체인", "ax플랫폼", "ax 플랫폼", "ax admin", "ax agent", "에이엑스", "admin", "python", "파이썬", "프롬프트", "prompt", "rag", "mcp", "채팅", "상담", "병원", "다국어", "관리자", "모델", "평가", "자동화"]],
   ["frontend", ["프론트", "frontend", "react", "next", "ui", "성능", "컴포넌트", "3d", "typescript", "타입스크립트", "javascript", "자바스크립트", "node.js", "nodejs", "로딩", "메모리", "최적화", "렌더링", "스프레드시트", "다이어그램", "diagram", "대시보드", "메타버스", "키오스크", "접근성", "반응형", "피그마", "figma", "css", "디자인 시스템", "design system", "상태 관리", "상태관리", "webgl", "그래픽"]],
   ["projects", ["프로젝트", "포트폴리오", "openstock", "openalarm", "opendata", "sweet", "성과", "숫자", "npm", "오픈소스", "오픈 소스", "open source", "패키지", "사이드"]],
-  ["career", ["경력", "회사", "이력", "몇 년", "다닌", "다녔", "wiseai", "wise ai", "와이즈", "sbt", "에스비티", "infoin", "인포인", "제이셋", "스태츠칩팩", "스탯츠칩팩", "jset", "statschippac", "오픈도어", "opendoor"]],
+  ["career", ["경력", "회사", "이력", "몇 년", "다닌", "다녔", "학력", "학교", "대학", "전공", "졸업", "자격증", "수료", "어학", "wiseai", "wise ai", "와이즈", "sbt", "에스비티", "infoin", "인포인", "제이셋", "스태츠칩팩", "스탯츠칩팩", "jset", "statschippac", "오픈도어", "opendoor"]],
   ["contact", ["연락", "이메일", "메일", "전화", "github", "linkedin", "깃헙", "깃허브", "링크드인", "블로그", "blog", "링크", "url"]],
 ];
 
