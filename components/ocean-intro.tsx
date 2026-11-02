@@ -8,8 +8,7 @@ import { useLocale } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import type { OceanHandle } from "@/lib/ocean/app";
 import { fetchWeather, type WeatherInfo } from "@/lib/ocean/solar";
-
-const SEEN_KEY = "ocean-intro-seen-v4";
+import { OCEAN_SEEN_KEY as SEEN_KEY } from "@/lib/ocean-seen";
 const VIEWS = ["Now", "Golden hour", "Breakers", "Lagoon", "Open ocean", "Aerial", "Flotsam", "Underwater"] as const;
 const WATER_COLORS = ["clear", "tropical", "toxic green", "purple", "rust orange", "murky brown"] as const;
 const TRACKS = [
@@ -72,7 +71,7 @@ export function OceanIntro() {
 
   useEffect(() => {
     const open = () => {
-      document.documentElement.classList.add("ocean-lock");
+      document.documentElement.classList.add("ocean-lock", "ocean-booted");
       setStep(0);
       setMenu(null);
       if (!oceanRef.current) setReady(false);   // only veil when the renderer must re-init
@@ -84,8 +83,7 @@ export function OceanIntro() {
       window.history.replaceState({}, "", window.location.pathname);
       raf = requestAnimationFrame(open);
     } else if (!sessionStorage.getItem(SEEN_KEY)) {
-      document.documentElement.classList.add("ocean-lock");
-      raf = requestAnimationFrame(() => setShow(true));
+      raf = requestAnimationFrame(open);
     }
     return () => {
       window.removeEventListener("ocean:open", open);

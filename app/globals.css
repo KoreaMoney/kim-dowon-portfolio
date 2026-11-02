@@ -971,6 +971,12 @@ html[lang="en"] .career-metric-value > span { min-width:0; overflow-wrap:anywher
 
 /* Ocean intro (first visit) — Ultra-Water real-time ocean behind the entry copy */
 html.ocean-lock, html.ocean-lock body { overflow:hidden; }
+/* pre-paint veil: covers the SSR page on a first visit so the portfolio never
+   flashes before the overlay mounts; lives in app/(portfolio)/layout.tsx */
+.ocean-preveil { position:fixed; inset:0; z-index:99; display:none; place-items:center; background:#04101d; }
+.ocean-preveil p { margin:0; color:#6fa9cc; font:650 12px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.18em; }
+html.ocean-first .ocean-preveil { display:grid; }
+html.ocean-booted .ocean-preveil { display:none; }
 .ocean-intro { position:fixed; inset:0; z-index:100; overflow:hidden; background:#04101d; }
 .ocean-canvas { position:absolute; inset:0; cursor:grab; }
 .ocean-canvas:active { cursor:grabbing; }
