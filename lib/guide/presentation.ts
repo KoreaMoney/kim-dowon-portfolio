@@ -2,22 +2,50 @@ import { companyScopableIntents, resolveNamedCompany, type GuideCompany, type Gu
 import type { GuideEvidenceId, GuideHistoryMessage, GuideTargetRole } from "./safety";
 import { CONTACT } from "@/lib/contact";
 
+export type GuideChartBar = {
+  label: string;
+  before: string;
+  after: string;
+  beforeValue: number;
+  afterValue: number;
+};
+
 export type GuideCard = {
   title: string;
   subtitle?: string;
   detail: string;
   metric?: string;
+  chart?: { bars: GuideChartBar[] };
 };
 
 type LocalizedText = Record<GuideLocale, string>;
+
+type GuideChartDef = {
+  label: LocalizedText;
+  before: string;
+  after: string;
+  beforeValue: number;
+  afterValue: number;
+};
 
 type GuideCardDef = {
   title: LocalizedText;
   subtitle?: LocalizedText;
   detail: LocalizedText;
   metric?: string;
+  chart?: GuideChartDef[];
   evidence?: GuideEvidenceId;
 };
+
+// Shared before/after measurements — defs repeat across intents, so the chart
+// data lives once. Percent bars index the baseline at 100.
+const CHART_LOAD_45_8: GuideChartDef = { label: { ko: "초기 로딩", en: "Initial load" }, before: "45s", after: "8s", beforeValue: 45, afterValue: 8 };
+const CHART_MEMORY_M40: GuideChartDef = { label: { ko: "메모리", en: "Memory" }, before: "100%", after: "60%", beforeValue: 100, afterValue: 60 };
+const CHART_TRANSLATION: GuideChartDef = { label: { ko: "번역 처리 시간", en: "Translation time" }, before: "15s", after: "7s", beforeValue: 15, afterValue: 7 };
+const CHART_TWIN_LOAD: GuideChartDef = { label: { ko: "초기 로딩", en: "Initial load" }, before: "35s", after: "15s", beforeValue: 35, afterValue: 15 };
+const CHART_TWIN_ASSET: GuideChartDef = { label: { ko: "3D 에셋 용량", en: "3D asset size" }, before: "1.95GB", after: "912MB", beforeValue: 1997, afterValue: 912 };
+const CHART_CONVERSION: GuideChartDef = { label: { ko: "예약 전환율", en: "Booking conversion" }, before: "100%", after: "140%", beforeValue: 100, afterValue: 140 };
+const CHART_TRACKING: GuideChartDef = { label: { ko: "불량 추적 시간", en: "Defect tracking time" }, before: "100%", after: "30%", beforeValue: 100, afterValue: 30 };
 
 const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
   career: [
@@ -38,6 +66,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "Alongside OpenDoorLabs, I build a hospital consultation and booking Agent chatbot, a translation Agent for 10 languages, and the in-house AX Admin platform. The translation timing is an internal measurement.",
       },
       metric: "15s → 7s · 10 languages · +40% conversion",
+      chart: [CHART_TRANSLATION, CHART_CONVERSION],
     },
     {
       title: { ko: "SBT Global", en: "SBT Global" },
@@ -47,6 +76,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I improved Agent operations interfaces and the state and performance of LayoutEditor, diagram, and spreadsheet products. The LayoutEditor figures are internal measurements.",
       },
       metric: "45s → 8s · memory −40% · 100+ components",
+      chart: [CHART_LOAD_45_8, CHART_MEMORY_M40],
     },
     {
       title: { ko: "Infoin", en: "Infoin" },
@@ -56,6 +86,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I developed frontend experiences for 3D digital twins, simulations, and kiosk products.",
       },
       metric: "35s → 15s · 1.95GB → 912MB",
+      chart: [CHART_TWIN_LOAD, CHART_TWIN_ASSET],
     },
     {
       title: { ko: "제이셋스태츠칩팩코리아(유)", en: "JSET StatsChipPAC Korea Co., Ltd." },
@@ -65,6 +96,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I developed a process defect tracking and statistics dashboard with quality issue notifications.",
       },
       metric: "tracking time −70%",
+      chart: [CHART_TRACKING],
     },
   ],
   hiring: [
@@ -83,6 +115,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I found duplicate calls and heavy loading paths, then reduced processing time. Both figures are internal measurements.",
       },
       metric: "15s → 7s · 45s → 8s",
+      chart: [CHART_TRANSLATION, CHART_LOAD_45_8],
     },
     {
       title: { ko: "문제와 소통을 함께 처리", en: "Problem solving through communication" },
@@ -102,6 +135,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I improved loading and memory in an editing interface with more than 100 components. The figures are internal measurements.",
       },
       metric: "45s → 8s · memory −40%",
+      chart: [CHART_LOAD_45_8, CHART_MEMORY_M40],
       evidence: "layouteditor",
     },
     {
@@ -111,6 +145,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I developed 3D exploration and simulation interfaces for aviation, logistics, and manufacturing data.",
       },
       metric: "35s → 15s · 1.95GB → 912MB",
+      chart: [CHART_TWIN_LOAD, CHART_TWIN_ASSET],
       evidence: "digital-twin",
     },
     {
@@ -130,6 +165,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I designed and built the request, language routing, context retention, and result delivery flow. The timing is an internal measurement.",
       },
       metric: "15s → 7s · 10 languages",
+      chart: [CHART_TRANSLATION],
       evidence: "translation-agent",
     },
     {
@@ -217,6 +253,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I improved loading and memory in an editing interface with more than 100 components. The figures are internal measurements.",
       },
       metric: "45s → 8s · memory −40%",
+      chart: [CHART_LOAD_45_8, CHART_MEMORY_M40],
       evidence: "layouteditor",
     },
     {
@@ -226,6 +263,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I designed and built the request, language routing, context retention, and result delivery flow. The timing is an internal measurement.",
       },
       metric: "15s → 7s · 10 languages",
+      chart: [CHART_TRANSLATION],
       evidence: "translation-agent",
     },
     {
@@ -289,6 +327,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I improved loading and memory in an editing interface with more than 100 components. The figures are internal measurements.",
       },
       metric: "45s → 8s · memory −40%",
+      chart: [CHART_LOAD_45_8, CHART_MEMORY_M40],
       evidence: "layouteditor",
     },
     {
@@ -298,6 +337,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I designed and built the request, language routing, context retention, and result delivery flow. The timing is an internal measurement.",
       },
       metric: "15s → 7s · 10 languages",
+      chart: [CHART_TRANSLATION],
       evidence: "translation-agent",
     },
     {
@@ -318,6 +358,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I improved loading and memory in an editing interface with more than 100 components. The figures are internal measurements.",
       },
       metric: "45s → 8s · memory −40%",
+      chart: [CHART_LOAD_45_8, CHART_MEMORY_M40],
       evidence: "layouteditor",
     },
     {
@@ -327,6 +368,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I designed and built the request, language routing, context retention, and result delivery flow. The timing is an internal measurement.",
       },
       metric: "15s → 7s · 10 languages",
+      chart: [CHART_TRANSLATION],
       evidence: "translation-agent",
     },
     {
@@ -347,6 +389,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I designed the translation flow for 10 languages and removed duplicate model calls. The timing is an internal measurement.",
       },
       metric: "15s → 7s",
+      chart: [CHART_TRANSLATION],
     },
     {
       title: { ko: "Frontend 성과", en: "Frontend result" },
@@ -355,6 +398,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
         en: "I improved LayoutEditor loading and memory bottlenecks. The figures are internal measurements.",
       },
       metric: "45s → 8s · memory −40%",
+      chart: [CHART_LOAD_45_8, CHART_MEMORY_M40],
     },
     {
       title: { ko: "검증 가능한 제품", en: "Verifiable product" },
@@ -373,6 +417,7 @@ function localizeCard(def: GuideCardDef, locale: GuideLocale): GuideCard {
     subtitle: def.subtitle?.[locale],
     detail: def.detail[locale],
     metric: def.metric,
+    chart: def.chart ? { bars: def.chart.map((bar) => ({ ...bar, label: bar.label[locale] })) } : undefined,
   };
 }
 

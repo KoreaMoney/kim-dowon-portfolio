@@ -250,6 +250,13 @@ section[id] { scroll-margin-top:76px; }
 .guide-answer-cards strong { color:#122d48; font-size:15px; }
 .guide-answer-cards li>b { display:block; margin:8px 0 4px; color:#075db4; font-size:18px; }
 .guide-answer-cards li>p { margin-top:6px; font-size:13px; line-height:1.55; }
+.guide-chart { display:grid; gap:3px; margin:8px 0 2px; }
+.guide-chart-label { font-size:11px; color:#536d85; }
+.guide-chart-row { display:flex; align-items:center; gap:8px; }
+.guide-chart-row i { display:block; height:8px; min-width:8px; border-radius:3px; }
+.guide-chart-row i.is-before { background:#c5d5e3; }
+.guide-chart-row i.is-after { background:var(--cobalt); }
+.guide-chart-row em { font-style:normal; font-size:11px; color:#122d48; font-variant-numeric:tabular-nums; white-space:nowrap; }
 .guide-message small { border-top:1px solid var(--line); padding-top:7px; color:#567087; font:600 9px ui-monospace,SFMono-Regular,Menlo,monospace; line-height:1.45; }
 .guide-thinking { display:flex; min-height:44px; align-items:center; gap:9px; color:#4d657a; font:11px ui-monospace,SFMono-Regular,Menlo,monospace; }
 .guide-thinking i { width:8px; height:8px; background:var(--cobalt); animation:guide-thinking 1s steps(2,end) infinite; }
