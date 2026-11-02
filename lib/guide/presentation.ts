@@ -89,7 +89,7 @@ const cardsByIntent: Record<GuideIntent, GuideCardDef[]> = {
       chart: [CHART_TWIN_LOAD, CHART_TWIN_ASSET],
     },
     {
-      title: { ko: "제이셋스태츠칩팩코리아(유)", en: "JSET StatsChipPAC Korea Co., Ltd." },
+      title: { ko: "제이셋스태츠칩팩코리아(유)", en: "JCET StatsChipPAC Korea Co., Ltd." },
       subtitle: { ko: "2016.08 - 2017.11 · QA ShiftLeader 책임", en: "2016.08 - 2017.11 · QA ShiftLeader" },
       detail: {
         ko: "공정 불량 추적·통계 대시보드와 품질 이슈 알림을 개발했습니다.",

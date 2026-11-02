@@ -72,7 +72,7 @@ export const portfolioEnglish: Record<string, string> = {
   "채용하면,": "If you hire me,",
   "이런 일을 잘합니다.": "this is the work I do well.",
   "Frontend, AI Agent, 문제 진단, 팀 소통을 따로 넘기지 않아도 됩니다. 한 사람이 제품 흐름을 이어서 봅니다.": "You do not need separate handoffs for frontend, AI Agents, problem diagnosis, and team communication. I follow the product flow from request to result.",
-  "제이셋스태츠칩팩코리아(유)": "JSET STATS ChipPAC Korea Ltd.",
+  "제이셋스태츠칩팩코리아(유)": "JCET STATS ChipPAC Korea Ltd.",
   "QA ShiftLeader 책임": "QA Shift Leader",
   "공정 불량 추적과 통계 집계를 자동화하고 현장 품질 알림을 만들었습니다.": "I automated process-defect tracking and statistical aggregation, and built on-site quality alerts.",
   "항공·물류·제조 데이터를 3D 디지털 트윈과 시뮬레이션 화면으로 옮겼습니다.": "I turned aviation, logistics, and manufacturing data into 3D digital twins and simulation interfaces.",

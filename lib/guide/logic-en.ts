@@ -7,7 +7,7 @@ export const englishPortfolioFacts = {
     "I currently work at WiseAI as AI Agent Pro · Frontend, building a hospital consultation and booking Agent chatbot, a real-time translation Agent for 10 languages, and an in-house AX Agent Admin platform.",
     "I also work as Founder · AI Product Engineer at OpenDoorLabs, where I design and operate OpenStockAI, OpenDataLabs, and OpenAlarm.",
     "I previously worked at SBT Global as a Frontend Engineer · AI Agent and at Infoin as a Frontend Engineer.",
-    "I worked at JSET StatsChipPAC Korea Co., Ltd. as a QA ShiftLeader and built a process defect tracking dashboard.",
+    "I worked at JCET StatsChipPAC Korea Co., Ltd. as a QA ShiftLeader and built a process defect tracking dashboard.",
   ],
   frontend: [
     "I build frontend products and Agent operations interfaces with React, Next.js, and TypeScript.",
@@ -77,7 +77,7 @@ export function detectEnglishGuideIntent(question: string): GuideIntent {
   if (includesAny(normalized, ["ai agent", "agent experience", "llm", "translation agent", "booking agent", "browser agent", "observer agent", "langgraph", "langchain", "langfuse", "wise dental", "wisedental", "와이즈덴탈", "chatbot", "chat bot", "ax platform", "ax admin", "ax agent", "admin", "챗봇", "에이전트", "번역", "예약", "브라우저", "python", "prompt", "mcp", "rag", "chat", "hospital", "consultation", "multilingual", "evaluation", "automation"])) return "agent";
   if (/\bui\b/.test(normalized) || includesAny(normalized, ["frontend", "front-end", "front end", "react", "next.js", "nextjs", "typescript", "javascript", "node.js", "nodejs", "user interface", "performance", "component", "3d", "digital twin", "layouteditor", "loading", "memory", "optimiz", "rendering", "spreadsheet", "dashboard", "accessibility", "a11y", "responsive", "design system", "figma", "css", "diagram", "metaverse", "kiosk", "state management", "webgl", "graphics", "프론트", "성능", "컴포넌트"])) return "frontend";
   if (includesAny(normalized, ["project", "portfolio", "builds", "case study", "openstock", "openalarm", "opendata", "sweet-diagram", "sweet diagram", "what did you build", "what have you built", "npm", "open source", "package", "side project", "side-project", "프로젝트", "포트폴리오", "성과", "숫자"])) return "projects";
-  if (includesAny(normalized, ["career", "work history", "employment", "companies", "company", "years of experience", "current role", "previous role", "where did you work", "where have you worked", "worked at", "experience", "wiseai", "wise ai", "opendoorlabs", "opendoor", "sbt", "infoin", "jset", "statschippac", "경력", "회사", "이력", "몇 년", "다닌", "다녔", "와이즈", "오픈도어", "에스비티", "인포인", "제이셋", "스태츠칩팩"])) return "career";
+  if (includesAny(normalized, ["career", "work history", "employment", "companies", "company", "years of experience", "current role", "previous role", "where did you work", "where have you worked", "worked at", "experience", "wiseai", "wise ai", "opendoorlabs", "opendoor", "sbt", "infoin", "jset", "jcet", "statschippac", "경력", "회사", "이력", "몇 년", "다닌", "다녔", "와이즈", "오픈도어", "에스비티", "인포인", "제이셋", "제이씨이티", "스태츠칩팩"])) return "career";
   if (includesAny(normalized, ["strength", "strong point", "fit for", "value to", "work with you", "problem solving", "collaboration", "communication", "협업"])) return "hiring";
   if (/\brole[- ]based\b|\bcontract tests?\b|\brouting\b|\brouter\b/.test(normalized)) return "openstock";
   if (/\bmeasurable results?\b|\bmetrics\b/.test(normalized)) return "projects";

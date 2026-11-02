@@ -59,7 +59,7 @@ const keywordGroups: Array<[GuideIntent, string[]]> = [
   ["agent", ["agent", "에이전트", "llm", "번역", "예약", "브라우저", "와이즈덴탈", "wisedental", "wise dental", "챗봇", "chatbot", "chat bot", "langgraph", "langchain", "langfuse", "랭그래프", "랭체인", "ax플랫폼", "ax 플랫폼", "ax admin", "ax agent", "에이엑스", "admin", "python", "파이썬", "프롬프트", "prompt", "rag", "mcp", "채팅", "상담", "병원", "다국어", "관리자", "모델", "평가", "자동화"]],
   ["frontend", ["프론트", "frontend", "react", "next", "ui", "성능", "컴포넌트", "3d", "typescript", "타입스크립트", "javascript", "자바스크립트", "node.js", "nodejs", "로딩", "메모리", "최적화", "렌더링", "스프레드시트", "다이어그램", "diagram", "대시보드", "메타버스", "키오스크", "접근성", "반응형", "피그마", "figma", "css", "디자인 시스템", "design system", "상태 관리", "상태관리", "webgl", "그래픽"]],
   ["projects", ["프로젝트", "포트폴리오", "openstock", "openalarm", "opendata", "sweet", "성과", "숫자", "npm", "오픈소스", "오픈 소스", "open source", "패키지", "사이드"]],
-  ["career", ["경력", "회사", "이력", "몇 년", "다닌", "다녔", "학력", "학교", "대학", "전공", "졸업", "자격증", "수료", "어학", "wiseai", "wise ai", "와이즈", "sbt", "에스비티", "infoin", "인포인", "제이셋", "스태츠칩팩", "스탯츠칩팩", "jset", "statschippac", "오픈도어", "opendoor"]],
+  ["career", ["경력", "회사", "이력", "몇 년", "다닌", "다녔", "학력", "학교", "대학", "전공", "졸업", "자격증", "수료", "어학", "wiseai", "wise ai", "와이즈", "sbt", "에스비티", "infoin", "인포인", "제이셋", "제이씨이티", "스태츠칩팩", "스탯츠칩팩", "jset", "jcet", "statschippac", "오픈도어", "opendoor"]],
   ["contact", ["연락", "이메일", "메일", "전화", "github", "linkedin", "깃헙", "깃허브", "링크드인", "블로그", "blog", "링크", "url"]],
 ];
 
@@ -86,7 +86,7 @@ const companyMentionPatterns: Array<[GuideCompany, RegExp]> = [
   ["opendoorlabs", /오픈\s*도어(?:\s*랩스?)?|\bopendoor(?:labs?)?\b|\bopen\s*door\s*labs?\b/i],
   ["sbt", /에스비티|\bsbt\b/i],
   ["infoin", /인포인|\binfoin\b/i],
-  ["jset", /제이셋|스태츠칩팩|스탯츠칩팩|\bjset\b|stats?\s*chip\s*pac/i],
+  ["jset", /제이셋|제이씨이티|스태츠칩팩|스탯츠칩팩|\bjset\b|\bjcet\b|stats?\s*chip\s*pac/i],
 ];
 
 const companyExclusionPattern = /말고|제외|빼고|다른\s*회사|다른\s*데|other\s+than|except|besides|apart\s+from|exclude/i;
@@ -231,7 +231,7 @@ export const companyLabels: Record<GuideCompany, Record<GuideLocale, string>> = 
   opendoorlabs: { ko: "OpenDoorLabs", en: "OpenDoorLabs" },
   sbt: { ko: "SBT Global", en: "SBT Global" },
   infoin: { ko: "Infoin", en: "Infoin" },
-  jset: { ko: "제이셋스태츠칩팩코리아(유)", en: "JSET StatsChipPAC Korea Co., Ltd." },
+  jset: { ko: "제이셋스태츠칩팩코리아(유)", en: "JCET StatsChipPAC Korea Co., Ltd." },
 };
 const companyNounPattern = /회사|직장|직책|company|employer|workplace/i;
 const projectNounPattern = /프로젝트|제품|서비스|에이전트|project|product|service|agent/i;
@@ -581,7 +581,7 @@ const companyFallbackAnswers: Record<GuideCompany, Record<GuideLocale, string>> 
   },
   jset: {
     ko: "저는 제이셋스태츠칩팩코리아(유)에서 QA ShiftLeader 책임으로 공정 불량 추적·통계 대시보드와 품질 이슈 알림을 개발했습니다.",
-    en: "At JSET StatsChipPAC Korea Co., Ltd., I worked as a QA ShiftLeader and built a process defect tracking and statistics dashboard with quality issue notifications.",
+    en: "At JCET StatsChipPAC Korea Co., Ltd., I worked as a QA ShiftLeader and built a process defect tracking and statistics dashboard with quality issue notifications.",
   },
 };
 

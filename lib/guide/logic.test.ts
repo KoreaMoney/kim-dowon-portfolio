@@ -232,7 +232,7 @@ test("English evidence, suggestions, and cards stay localized and factual", () =
     "WiseAI",
     "SBT Global",
     "Infoin",
-    "JSET StatsChipPAC Korea Co., Ltd.",
+    "JCET StatsChipPAC Korea Co., Ltd.",
   ]);
   assert.match(careerCards[0].subtitle ?? "", /2026 - Present/);
   assert.match(careerCards[1].subtitle ?? "", /2025\.10 - Present/);
