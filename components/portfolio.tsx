@@ -4,11 +4,11 @@ import {
   ArrowUpRightIcon, BracketsCurlyIcon, BriefcaseIcon,
   CheckIcon, CopySimpleIcon, DownloadSimpleIcon, EnvelopeSimpleIcon, GitCommitIcon,
   GameControllerIcon, GithubLogoIcon, LinkedinLogoIcon, ListIcon, LockKeyOpenIcon, PhoneIcon,
-  PulseIcon, SquaresFourIcon, TerminalWindowIcon, UserIcon,
+  PulseIcon, SquaresFourIcon, TerminalWindowIcon, UserIcon, WavesIcon,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useInView, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { GuideAgent } from "@/components/guide-agent";
 import { PracticeContent } from "@/components/practice-content";
@@ -58,6 +58,7 @@ const heroFlowSteps = [
 
 function CommandNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { locale, setLocale, t } = useLocale();
   const current = navItems.find((item) => item.href === pathname)?.label ?? "Overview";
   return (
@@ -70,6 +71,18 @@ function CommandNav() {
         </SheetContent>
       </Sheet>
       <div className="command-controls">
+        <button
+          className="command-jump command-ocean"
+          type="button"
+          onClick={() => {
+            if (pathname === "/") window.dispatchEvent(new Event("ocean:open"));
+            else router.push("/?ocean=1");
+          }}
+          aria-label={t("바다 화면 다시 보기")}
+          title={t("바다 화면 다시 보기")}
+        >
+          <WavesIcon size={18} /><b>OCEAN</b>
+        </button>
         <button
           className="command-jump command-locale"
           type="button"

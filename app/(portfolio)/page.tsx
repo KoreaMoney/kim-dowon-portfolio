@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OceanIntro } from "@/components/ocean-intro";
 import { Portfolio } from "@/components/portfolio";
 import { getLocalizedMetadata } from "@/lib/i18n/metadata";
 
@@ -16,5 +17,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function HomePage() {
-  return <Portfolio page="home" />;
+  return (
+    <>
+      <OceanIntro />
+      <Portfolio page="home" />
+    </>
+  );
 }

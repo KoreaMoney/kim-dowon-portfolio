@@ -968,3 +968,76 @@ html[lang="en"] .career-metric-value > span { min-width:0; overflow-wrap:anywher
 @media (min-width:681px) {
   .sf-controls { margin-inline:auto; }
 }
+
+/* Ocean intro (first visit) — Ultra-Water real-time ocean behind the entry copy */
+html.ocean-lock, html.ocean-lock body { overflow:hidden; }
+.ocean-intro { position:fixed; inset:0; z-index:100; overflow:hidden; background:#04101d; }
+.ocean-canvas { position:absolute; inset:0; cursor:grab; }
+.ocean-canvas:active { cursor:grabbing; }
+.ocean-canvas canvas { display:block; width:100%; height:100%; }
+.ocean-copy { position:absolute; left:max(24px,calc((100vw - 1180px)/2)); bottom:12vh; z-index:3; display:grid; gap:14px; justify-items:start; max-width:640px; pointer-events:none; }
+.ocean-copy > * { pointer-events:auto; }
+.ocean-label { margin:0; color:#8fd8ff; font:650 12px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.14em; text-shadow:0 1px 12px rgba(3,14,24,.6); }
+.ocean-copy h1 { margin:0; color:#fff; font-size:clamp(34px,4.6vw,58px); line-height:1.14; font-weight:680; word-break:keep-all; text-shadow:0 2px 26px rgba(3,14,24,.55),0 1px 4px rgba(3,14,24,.5); }
+.ocean-enter { min-height:48px; margin-top:8px; padding-inline:20px; border-color:rgba(255,255,255,.65); font-size:15px; box-shadow:0 4px 24px rgba(3,14,24,.35); }
+.ocean-hud { position:absolute; right:20px; bottom:16px; left:20px; z-index:3; display:flex; align-items:center; justify-content:space-between; gap:12px; color:#cfe8f7; font:600 11px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.08em; text-shadow:0 1px 8px rgba(3,14,24,.7); pointer-events:none; }
+.ocean-hud span,.ocean-hud a { display:inline-flex; align-items:center; gap:6px; }
+.ocean-hud a { color:#9fd4f2; pointer-events:auto; }
+.ocean-hud a:hover { color:#fff; }
+.ocean-veil { position:absolute; inset:0; z-index:4; display:grid; place-items:center; background:#04101d; pointer-events:none; }
+.ocean-veil p { margin:0; color:#6fa9cc; font:650 12px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.18em; }
+.ocean-dots i { animation:ocean-dot 1.2s ease-in-out infinite; font-style:normal; }
+.ocean-dots i:nth-child(2) { animation-delay:.18s; }
+.ocean-dots i:nth-child(3) { animation-delay:.36s; }
+@keyframes ocean-dot { 40%{ opacity:.1; } }
+@media (max-width:680px) {
+  .ocean-copy { right:20px; left:20px; bottom:14vh; }
+  .ocean-hud { justify-content:center; }
+  .ocean-hud a { display:none; }
+}
+
+/* Ocean intro — view / water-colour switcher */
+.ocean-switches { position:relative; z-index:2; display:flex; align-items:center; gap:16px; pointer-events:auto; }
+.ocean-switch { position:relative; }
+.ocean-switch > button { display:inline-flex; align-items:center; gap:6px; border:0; background:none; padding:4px 0; color:#cfe8f7; font:600 11px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.08em; text-shadow:0 1px 8px rgba(3,14,24,.7); cursor:pointer; }
+.ocean-switch > button:hover, .ocean-switch > button[aria-expanded="true"] { color:#fff; }
+.ocean-switch ul { position:absolute; right:50%; bottom:calc(100% + 10px); transform:translateX(50%); min-width:160px; margin:0; padding:5px; list-style:none; border:1px solid rgba(143,216,255,.28); border-radius:6px; background:rgba(4,16,29,.85); box-shadow:0 10px 34px rgba(2,10,18,.5); backdrop-filter:blur(12px); }
+.ocean-switch li button { display:block; width:100%; border:0; border-radius:4px; background:none; padding:8px 10px; color:#cfe8f7; font:600 11px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.06em; text-align:left; cursor:pointer; }
+.ocean-switch li button:hover { background:rgba(143,216,255,.14); color:#fff; }
+.ocean-switch li button[aria-current="true"] { color:#8fd8ff; }
+.ocean-switch li button[aria-current="true"]::after { content:" ·"; }
+.ocean-menu-close { position:fixed; inset:0; z-index:-1; border:0; background:transparent; cursor:default; }
+@media (max-width:680px) {
+  .ocean-switches { order:-1; }
+  .ocean-hud { flex-wrap:wrap; row-gap:8px; }
+}
+
+/* Ocean intro — frosted-glass live chip & music pill (iOS-style) */
+.ocean-live { display:flex; flex-direction:column; align-items:flex-end; gap:4px; padding:12px 18px; border:1px solid rgba(255,255,255,.24); border-radius:18px; background:rgba(8,20,36,.30); box-shadow:0 10px 34px rgba(2,10,18,.38), inset 0 1px 0 rgba(255,255,255,.16); backdrop-filter:blur(18px) saturate(150%); -webkit-backdrop-filter:blur(18px) saturate(150%); }
+.ocean-live b { color:#fff; font:700 clamp(20px,2.4vw,30px)/1 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.04em; font-variant-numeric:tabular-nums; text-shadow:0 1px 10px rgba(3,14,24,.5); }
+.ocean-live i { color:#9fd4f2; font:600 10px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.18em; font-style:normal; }
+.ocean-audio { display:flex; align-items:center; gap:8px; padding:7px 12px; border:1px solid rgba(255,255,255,.18); border-radius:999px; background:rgba(8,20,36,.30); box-shadow:0 8px 26px rgba(2,10,18,.30), inset 0 1px 0 rgba(255,255,255,.14); backdrop-filter:blur(16px) saturate(150%); -webkit-backdrop-filter:blur(16px) saturate(150%); }
+.ocean-audio > button { display:grid; place-items:center; border:0; background:none; padding:2px; color:#cfe8f7; cursor:pointer; }
+.ocean-audio > button:hover { color:#fff; }
+.ocean-track { display:inline-flex; align-items:center; gap:5px; max-width:140px; overflow:hidden; color:#9fd4f2; font-size:10px; letter-spacing:.04em; text-overflow:ellipsis; white-space:nowrap; }
+.ocean-volume { width:70px; accent-color:#8fd8ff; cursor:pointer; }
+@media (max-width:680px) {
+  .ocean-live { padding:10px 14px; }
+  .ocean-track { max-width:90px; }
+}
+
+/* Ocean intro — rotating bio sequence */
+.ocean-slide { display:flex; min-height:196px; align-items:flex-end; }
+.ocean-slide-kicker { display:flex; align-items:baseline; gap:12px; margin:0 0 12px; color:#8fd8ff; font:650 12px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.12em; text-shadow:0 1px 12px rgba(3,14,24,.6); }
+.ocean-slide-kicker span { color:#cfe8f7; font-size:10px; letter-spacing:.16em; opacity:.75; }
+.ocean-slide h1 { margin:0; }
+.ocean-slide--static { display:grid; min-height:0; gap:10px; align-content:end; }
+.ocean-slide--static p { display:grid; gap:2px; margin:0; color:#fff; font-size:15px; font-weight:600; line-height:1.4; text-shadow:0 1px 10px rgba(3,14,24,.55); }
+.ocean-slide--static p span { color:#8fd8ff; font:650 10px ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.12em; }
+.ocean-copy-foot { display:grid; gap:14px; justify-items:start; }
+.ocean-bio-dots { display:flex; gap:5px; }
+.ocean-bio-dots i { width:14px; height:2px; background:rgba(255,255,255,.32); transition:width .4s cubic-bezier(.22,1,.36,1),background-color .4s; }
+.ocean-bio-dots i.on { width:30px; background:#8fd8ff; }
+@media (max-width:680px) {
+  .ocean-slide { min-height:150px; }
+}
