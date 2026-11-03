@@ -281,7 +281,7 @@ export function OceanIntro() {
           </motion.div>
 
           <div className="ocean-hud">
-            <span><HandGrabbingIcon size={14} /> {t("드래그로 둘러보기")}</span>
+            <span className="ocean-hint"><HandGrabbingIcon size={14} /> {t("드래그로 둘러보기")}</span>
             <div className="ocean-switches">
               {menu && <button className="ocean-menu-close" type="button" tabIndex={-1} aria-hidden="true" onClick={() => setMenu(null)} />}
               <div className="ocean-audio">

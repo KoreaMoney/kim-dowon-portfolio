@@ -998,8 +998,12 @@ html.ocean-booted .ocean-preveil { display:none; }
 @keyframes ocean-dot { 40%{ opacity:.1; } }
 @media (max-width:680px) {
   .ocean-copy { right:20px; left:20px; bottom:14vh; }
-  .ocean-hud { justify-content:center; }
+  /* controls live at the top on phones — the bottom belongs to the copy and the
+     enter button, so nothing collides */
+  .ocean-hud { top:10px; bottom:auto; justify-content:center; }
   .ocean-hud a { display:none; }
+  .ocean-hint { display:none; }
+  .ocean-switch ul { top:calc(100% + 8px); bottom:auto; }
 }
 
 /* Ocean intro — view / water-colour switcher */
@@ -1014,8 +1018,8 @@ html.ocean-booted .ocean-preveil { display:none; }
 .ocean-switch li button[aria-current="true"]::after { content:" ·"; }
 .ocean-menu-close { position:fixed; inset:0; z-index:-1; border:0; background:transparent; cursor:default; }
 @media (max-width:680px) {
-  .ocean-switches { order:-1; }
   .ocean-hud { flex-wrap:wrap; row-gap:8px; }
+  .ocean-switches { flex-wrap:wrap; justify-content:center; row-gap:8px; }
 }
 
 /* Ocean intro — frosted-glass live chip & music pill (iOS-style) */
@@ -1028,7 +1032,8 @@ html.ocean-booted .ocean-preveil { display:none; }
 .ocean-track { display:inline-flex; align-items:center; gap:5px; max-width:140px; overflow:hidden; color:#9fd4f2; font-size:10px; letter-spacing:.04em; text-overflow:ellipsis; white-space:nowrap; }
 .ocean-volume { width:70px; accent-color:#8fd8ff; cursor:pointer; }
 @media (max-width:680px) {
-  .ocean-live { padding:10px 14px; }
+  .ocean-live { padding:8px 12px; }
+  .ocean-live b { font-size:18px; }
   .ocean-track { max-width:90px; }
 }
 
