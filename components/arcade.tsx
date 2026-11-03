@@ -1,6 +1,7 @@
 "use client";
 
-import { BoxingGloveIcon, PersonSimpleRunIcon, SquaresFourIcon, TrophyIcon } from "@phosphor-icons/react";
+import { BoxingGloveIcon, PersonSimpleRunIcon, RobotIcon, SquaresFourIcon, TrophyIcon } from "@phosphor-icons/react";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { BearRun } from "@/components/bearrun";
 import { BlueBear } from "@/components/bluebear";
@@ -9,7 +10,9 @@ import { useLocale } from "@/components/locale-provider";
 import { StickFight } from "@/components/stickfight";
 import { WorldCup } from "@/components/worldcup";
 
-type GameId = "worldcup" | "bricks" | "fight" | "run";
+const BotArena = dynamic(() => import("@/components/botarena").then((m) => m.BotArena), { ssr: false });
+
+type GameId = "worldcup" | "bricks" | "fight" | "run" | "arena";
 
 export function Arcade() {
   const { locale } = useLocale();
@@ -26,6 +29,7 @@ function LocalizedArcade() {
   if (game === "bricks") return <BrickBreaker onExit={back} />;
   if (game === "fight") return <StickFight onExit={back} />;
   if (game === "run") return <BearRun onExit={back} />;
+  if (game === "arena") return <BotArena onExit={back} />;
 
   const games: { id: GameId; icon: typeof TrophyIcon; name: string; desc: string; note: string }[] = [
     {
@@ -64,6 +68,15 @@ function LocalizedArcade() {
         : "횡스크롤 플랫폼 게임. 버그를 밟고, 스킬 칩 12개를 모아 플래그까지 달리세요.",
       note: en ? "3 hearts · 12 chips" : "하트 3개 · 칩 12개",
     },
+    {
+      id: "arena",
+      icon: RobotIcon,
+      name: en ? "Bot Arena" : "봇 아레나",
+      desc: en
+        ? "A first-person wave defense in real-time 3D. Hostile bots charge in and open fire — drop them first."
+        : "실시간 3D 1인칭 웨이브 디펜스. 돌격해오는 적 봇들이 발사하기 전에 쓰러뜨리세요.",
+      note: en ? "FPS · 5 waves" : "FPS · 5웨이브",
+    },
   ];
 
   return (
@@ -79,7 +92,7 @@ function LocalizedArcade() {
           {games.map((item) => {
             const Icon = item.icon;
             return (
-              <button key={item.id} type="button" className="ac-card" onClick={() => setGame(item.id)}>
+              <button key={item.id} type="button" className={`ac-card${item.id === "arena" ? " ac-card--wide" : ""}`} onClick={() => setGame(item.id)}>
                 <span className="wc-card-icon"><Icon size={30} /></span>
                 <strong>{item.name}</strong>
                 <small>{item.desc}</small>
