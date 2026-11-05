@@ -51,6 +51,7 @@ export function OceanIntro() {
   const reduced = useReducedMotion();
   const mountRef = useRef<HTMLDivElement>(null);
   const oceanRef = useRef<OceanHandle | null>(null);
+  const benchRef = useRef(false);
   const [show, setShow] = useState(false);
   const [ready, setReady] = useState(false);
   const [step, setStep] = useState(0);
@@ -79,7 +80,9 @@ export function OceanIntro() {
     };
     window.addEventListener("ocean:open", open);
     let raf = 0;
-    if (new URLSearchParams(window.location.search).has("ocean")) {
+    const params = new URLSearchParams(window.location.search);
+    benchRef.current = params.has("bench");   // captured before the strip below
+    if (params.has("ocean")) {
       window.history.replaceState({}, "", window.location.pathname);
       raf = requestAnimationFrame(open);
     } else if (!sessionStorage.getItem(SEEN_KEY)) {
@@ -108,8 +111,10 @@ export function OceanIntro() {
         oceanRef.current = createOcean(mountRef.current, {
           view: "Now",
           coords: SEOUL,
+          bench: benchRef.current,
           onReady: () => !cancelled && setReady(true),
         });
+        if (reduced) oceanRef.current.pause();   // still ocean behind the static copy
         if (weatherRef.current) oceanRef.current.setWeather(weatherRef.current);
       })
       .catch(() => {
@@ -118,7 +123,7 @@ export function OceanIntro() {
         setShow(false);
       });
     return () => { cancelled = true; };
-  }, [show]);
+  }, [show, reduced]);
 
   // the renderer stays alive through the exit animation; freed on exit-complete
   // (below) or here when the page unmounts mid-intro

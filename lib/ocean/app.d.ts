@@ -2,6 +2,7 @@ export interface OceanOptions {
   view?: string;
   onReady?: () => void;
   coords?: { lat: number; lon: number };
+  bench?: boolean;
 }
 
 export interface OceanWeather {
