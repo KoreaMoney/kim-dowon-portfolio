@@ -2,7 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowCounterClockwiseIcon, PaperPlaneRightIcon, XIcon } from "@phosphor-icons/react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -12,6 +12,7 @@ import Markdown from "react-markdown";
 import { useLocale, type Locale } from "@/components/locale-provider";
 import { createExitIntentTracker } from "@/lib/guide/exit-intent";
 import { nextGuideIntroIndex, shouldShowGuideIntro } from "@/lib/intro-guide-lifecycle";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 type GuideMessage = {
   id: string;

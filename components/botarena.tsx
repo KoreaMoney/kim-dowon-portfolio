@@ -1,13 +1,13 @@
 "use client";
 
 import { ArrowCounterClockwiseIcon, ArrowRightIcon, FlagIcon, HeartIcon, RobotIcon } from "@phosphor-icons/react";
-import { useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { BearBubble, BlueBear } from "@/components/bluebear";
 import { useLocale } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 type Phase = "ready" | "run" | "stage" | "won" | "lost";
 type Difficulty = "easy" | "normal" | "hard";

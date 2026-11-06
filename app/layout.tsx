@@ -40,8 +40,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const locale = await readLocaleCookie();
   return <html lang={locale} data-scroll-behavior="smooth" suppressHydrationWarning><body>
-    {/* runs before first paint: first-time home visitors get .ocean-first so the
-        SSR veil covers the page until the ocean overlay mounts — no portfolio flash */}
-    <script dangerouslySetInnerHTML={{ __html: `try{if(location.pathname==="/"&&!sessionStorage.getItem(${JSON.stringify(OCEAN_SEEN_KEY)}))document.documentElement.classList.add("ocean-first")}catch(e){}` }} />
+    {/* runs before first paint: first-time home visitors and ?ocean reopen links get
+        .ocean-first so the SSR veil covers the page until the ocean overlay mounts */}
+    <script dangerouslySetInnerHTML={{ __html: `try{if(location.pathname==="/"&&(new URLSearchParams(location.search).has("ocean")||!sessionStorage.getItem(${JSON.stringify(OCEAN_SEEN_KEY)})))document.documentElement.classList.add("ocean-first")}catch(e){}` }} />
     <LocaleProvider initialLocale={locale}>{children}</LocaleProvider></body></html>;
 }

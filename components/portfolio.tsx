@@ -6,7 +6,7 @@ import {
   GameControllerIcon, GithubLogoIcon, LinkedinLogoIcon, ListIcon, LockKeyOpenIcon, PhoneIcon,
   PulseIcon, SquaresFourIcon, TerminalWindowIcon, UserIcon, WavesIcon,
 } from "@phosphor-icons/react";
-import { AnimatePresence, motion, useInView, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useInView } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -16,6 +16,7 @@ import { useLocale } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CONTACT } from "@/lib/contact";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 const navItems = [
   { href: "/", label: "Overview", icon: UserIcon },

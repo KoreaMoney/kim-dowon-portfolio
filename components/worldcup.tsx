@@ -6,7 +6,7 @@ import {
   MagnifyingGlassIcon, PackageIcon, RobotIcon, ShareNetworkIcon, ShieldCheckIcon, SunIcon,
   TranslateIcon, TrophyIcon, UsersIcon, WrenchIcon, type Icon,
 } from "@phosphor-icons/react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BearBubble, BlueBear } from "@/components/bluebear";
@@ -16,6 +16,7 @@ import {
   analysisSteps, bearLines, candidates, fallbackVerdict, stageKeyOf, stageLabel,
   type Candidate,
 } from "@/lib/worldcup/data";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 const candidateIcons: Record<string, Icon> = {
   perf: LightningIcon, talk: ChatCircleDotsIcon, agent: RobotIcon, verify: ShieldCheckIcon,

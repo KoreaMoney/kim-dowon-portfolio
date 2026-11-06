@@ -1,12 +1,12 @@
 "use client";
 
 import { ArrowCounterClockwiseIcon, ArrowRightIcon, TrophyIcon } from "@phosphor-icons/react";
-import { useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { BearBubble, BlueBear } from "@/components/bluebear";
 import { useLocale } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 const W = 640;
 const H = 420;

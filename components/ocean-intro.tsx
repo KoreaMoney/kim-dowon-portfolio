@@ -1,14 +1,15 @@
 "use client";
 
 import { ArrowDownIcon, HandGrabbingIcon, MusicNotesIcon, SpeakerHighIcon, SpeakerSlashIcon } from "@phosphor-icons/react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocale } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import type { OceanHandle } from "@/lib/ocean/app";
 import { fetchWeather, type WeatherInfo } from "@/lib/ocean/solar";
 import { OCEAN_SEEN_KEY as SEEN_KEY } from "@/lib/ocean-seen";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 const VIEWS = ["Now", "Golden hour", "Breakers", "Lagoon", "Open ocean", "Aerial", "Flotsam", "Underwater"] as const;
 const WATER_COLORS = ["clear", "tropical", "toxic green", "purple", "rust orange", "murky brown"] as const;
 const TRACKS = [
@@ -51,6 +52,8 @@ export function OceanIntro() {
   const reduced = useReducedMotion();
   const mountRef = useRef<HTMLDivElement>(null);
   const oceanRef = useRef<OceanHandle | null>(null);
+  const showRef = useRef(false);
+  const reducedRef = useRef(false);
   const benchRef = useRef(false);
   const [show, setShow] = useState(false);
   const [ready, setReady] = useState(false);
@@ -70,33 +73,40 @@ export function OceanIntro() {
   const [audioBlocked, setAudioBlocked] = useState(false);
   const [now, setNow] = useState(() => new Date());
 
+  // html.ocean-booted drops the SSR preveil — only once this section (and its own
+  // veil) is committed, so the two never leave a painted gap between them
+  const mountEl = useCallback((el: HTMLDivElement | null) => {
+    mountRef.current = el;
+    if (el) document.documentElement.classList.add("ocean-booted");
+  }, []);
+
   useEffect(() => {
     const open = () => {
-      document.documentElement.classList.add("ocean-lock", "ocean-booted");
+      document.documentElement.classList.add("ocean-lock");
       setStep(0);
       setMenu(null);
-      if (!oceanRef.current) setReady(false);   // only veil when the renderer must re-init
+      // veil up again unless the live intro is already showing its ocean
+      if (!showRef.current || !oceanRef.current) setReady(false);
+      showRef.current = true;
       setShow(true);
     };
     window.addEventListener("ocean:open", open);
-    let raf = 0;
     const params = new URLSearchParams(window.location.search);
     benchRef.current = params.has("bench");   // captured before the strip below
     if (params.has("ocean")) {
       window.history.replaceState({}, "", window.location.pathname);
-      raf = requestAnimationFrame(open);
+      open();
     } else if (!sessionStorage.getItem(SEEN_KEY)) {
-      raf = requestAnimationFrame(open);
+      open();
     }
     return () => {
       window.removeEventListener("ocean:open", open);
-      cancelAnimationFrame(raf);
       document.documentElement.classList.remove("ocean-lock");
     };
   }, []);
 
   useEffect(() => {
-    if (!show || !mountRef.current || oceanRef.current) return;
+    if (!show || !mountRef.current) return;
     let cancelled = false;
     fetchWeather(SEOUL.lat, SEOUL.lon)
       .then((w) => {
@@ -107,23 +117,36 @@ export function OceanIntro() {
       .catch(() => {});
     import("@/lib/ocean/app")
       .then(({ createOcean }) => {
-        if (cancelled || !mountRef.current || oceanRef.current) return;
+        if (cancelled || !mountRef.current) return;
+        // a stale handle's canvas lives in a section that already unmounted —
+        // free it before rebuilding, or the intro stays open with no ocean
+        oceanRef.current?.dispose();
         oceanRef.current = createOcean(mountRef.current, {
           view: "Now",
           coords: SEOUL,
           bench: benchRef.current,
-          onReady: () => !cancelled && setReady(true),
+          onReady: () => {
+            if (cancelled) return;
+            if (reducedRef.current) oceanRef.current?.pause();   // still ocean behind the static copy
+            setReady(true);
+          },
         });
-        if (reduced) oceanRef.current.pause();   // still ocean behind the static copy
         if (weatherRef.current) oceanRef.current.setWeather(weatherRef.current);
       })
       .catch(() => {
         // WebGL unavailable or failed — don't trap the visitor on the intro
         sessionStorage.setItem(SEEN_KEY, "1");
+        showRef.current = false;
         setShow(false);
       });
     return () => { cancelled = true; };
-  }, [show, reduced]);
+  }, [show]);
+
+  // mirrors the render-time value for onReady; the media query only resolves
+  // after hydration (see lib/use-reduced-motion)
+  useEffect(() => {
+    reducedRef.current = reduced;
+  }, [reduced]);
 
   // the renderer stays alive through the exit animation; freed on exit-complete
   // (below) or here when the page unmounts mid-intro
@@ -220,6 +243,7 @@ export function OceanIntro() {
     sessionStorage.setItem(SEEN_KEY, "1");
     setMenu(null);
     document.documentElement.classList.remove("ocean-lock");
+    showRef.current = false;
     setShow(false);   // AnimatePresence keeps the section alive while the exit plays
   }
 
@@ -229,7 +253,13 @@ export function OceanIntro() {
   // portal to body: route-transition's transform would trap this in its stacking
   // context below the site nav (and break position:fixed on the viewport)
   return createPortal(
-    <AnimatePresence onExitComplete={() => { oceanRef.current?.dispose(); oceanRef.current = null; }}>
+    // onExitComplete fires even when the intro reopened mid-exit — only free the
+    // renderer when it actually stayed closed, or the fresh ocean dies with it
+    <AnimatePresence onExitComplete={() => {
+      if (showRef.current) return;
+      oceanRef.current?.dispose();
+      oceanRef.current = null;
+    }}>
       {show && (
         <motion.section
           className="ocean-intro"
@@ -238,7 +268,7 @@ export function OceanIntro() {
           exit={{ opacity: 0, scale: 1.04 }}
           transition={{ duration: reduced ? 0.15 : 0.7, ease }}
         >
-          <div ref={mountRef} className="ocean-canvas" aria-hidden="true" />
+          <div ref={mountEl} className="ocean-canvas" aria-hidden="true" />
 
           <motion.div
             className="ocean-copy"
